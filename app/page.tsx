@@ -13,7 +13,10 @@ export default function Home() {
 				placeholder="Ask me anything"
 			/>
 
-			<button type="submit" className="m-3 text-neutral-700">
+			<button
+				type="submit"
+				className="m-3 text-neutral-700 hover:text-black"
+			>
 				<IconCornerDownLeft />
 			</button>
 		</form>
