@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import clsx from "clsx";
 import "./globals.css";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
 	title: "Swift",
@@ -22,6 +23,8 @@ export default function RootLayout({
 				)}
 			>
 				{children}
+
+				<Toaster />
 			</body>
 		</html>
 	);
