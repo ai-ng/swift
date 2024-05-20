@@ -74,7 +74,7 @@ export default function Home() {
 	}
 
 	return (
-		<form className="rounded-full bg-neutral-200 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-blue-300 hover:focus-within:border-blue-300">
+		<form className="rounded-full bg-neutral-200 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400">
 			<button
 				className={clsx(
 					"rounded-full bg-white p-1 border border-neutral-300 drop-shadow m-3 hover:scale-110 active:scale-90 transition ease-in-out",
