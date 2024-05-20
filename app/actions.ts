@@ -40,5 +40,6 @@ export async function assistant(base64: string) {
 export async function convertToFile(base64: string) {
 	const res = await fetch(base64);
 	const blob = await res.blob();
-	return new File([blob], "audio.wav", { type: "audio/wav" });
+	const extension = blob.type.split("/")[1];
+	return new File([blob], `audio.${extension}`, { type: blob.type });
 }

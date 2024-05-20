@@ -20,8 +20,16 @@ export default function Home() {
 		return navigator.mediaDevices
 			.getUserMedia({ audio: true })
 			.then((stream) => {
+				const mimeType = getSupportedMimeType();
+				if (!mimeType) {
+					toast.error(
+						"Your browser does not support audio recording."
+					);
+					return null;
+				}
+
 				return new MediaRecorder(stream, {
-					mimeType: "audio/webm",
+					mimeType,
 				});
 			})
 			.catch(() => {
@@ -116,4 +124,9 @@ function toBase64(blob: Blob): Promise<string> {
 		};
 		reader.onerror = (error) => reject(error);
 	});
+}
+
+const types = ["audio/webm", "video/mp4", "audio/mpeg", "audio/wav"];
+function getSupportedMimeType() {
+	return types.find((type) => MediaRecorder.isTypeSupported(type));
 }
