@@ -33,6 +33,7 @@ export default function Home() {
 					const blob = new Blob(chunks.current, {
 						type: "audio/webm",
 					});
+					chunks.current = [];
 					const base64 = await toBase64(blob);
 					const response = await assistant(base64);
 					toast(response);
