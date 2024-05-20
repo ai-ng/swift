@@ -7,7 +7,7 @@ import {
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import { assistant } from "@/app/actions";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 export default function Home() {
@@ -16,46 +16,61 @@ export default function Home() {
 	const recorder = useRef<MediaRecorder | null>(null);
 	const chunks = useRef<Array<Blob>>([]);
 
-	function startRecording() {
-		navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-			recorder.current = new MediaRecorder(stream, {
-				mimeType: "audio/webm",
-			});
-
-			recorder.current.addEventListener("dataavailable", (e) => {
-				chunks.current.push(e.data);
-			});
-
-			recorder.current.start();
-
-			recorder.current.addEventListener("stop", () => {
-				startTransition(async () => {
-					const blob = new Blob(chunks.current, {
-						type: "audio/webm",
-					});
-					chunks.current = [];
-					const base64 = await toBase64(blob);
-					const response = await assistant(base64);
-					toast(response);
+	async function getRecorder() {
+		return navigator.mediaDevices
+			.getUserMedia({ audio: true })
+			.then((stream) => {
+				return new MediaRecorder(stream, {
+					mimeType: "audio/webm",
 				});
+			})
+			.catch(() => {
+				toast.error("Access to microphone was denied.");
+				return null;
 			});
-		});
 	}
 
-	function stopRecording() {
-		recorder.current?.stop();
+	useEffect(() => {
+		getRecorder().then((r) => (recorder.current = r));
+	}, []);
+
+	async function startRecording() {
+		if (!recorder.current) recorder.current = await getRecorder();
+		if (!recorder.current) return;
+
+		recorder.current.addEventListener("dataavailable", (e) => {
+			chunks.current.push(e.data);
+		});
+
+		recorder.current.start();
+		setIsRecording(true);
+
+		recorder.current.addEventListener("stop", () => {
+			setIsRecording(false);
+			startTransition(async () => {
+				const blob = new Blob(chunks.current, {
+					type: "audio/webm",
+				});
+				chunks.current = [];
+				const base64 = await toBase64(blob);
+				const { error, text } = await assistant(base64);
+				if (error) {
+					toast.error(error);
+				} else {
+					toast(text);
+				}
+			});
+		});
 	}
 
 	function handleMicButtonClick(e: React.MouseEvent) {
 		e.preventDefault();
 
 		if (isRecording) {
-			stopRecording();
+			recorder.current?.stop();
 		} else {
 			startRecording();
 		}
-
-		setIsRecording(!isRecording);
 	}
 
 	return (

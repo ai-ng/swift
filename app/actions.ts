@@ -15,6 +15,10 @@ export async function assistant(base64: string) {
 		model: "whisper-large-v3",
 	});
 
+	if (text.trim().length === 0) {
+		return { error: "No audio detected." };
+	}
+
 	const response = await groq.chat.completions.create({
 		model: "llama3-8b-8192",
 		messages: [
@@ -30,7 +34,7 @@ export async function assistant(base64: string) {
 		],
 	});
 
-	return response.choices[0].message.content;
+	return { error: null, text: response.choices[0].message.content };
 }
 
 export async function convertToFile(base64: string) {
