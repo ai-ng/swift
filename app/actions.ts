@@ -1,11 +1,8 @@
 "use server";
 
-import OpenAI from "openai";
+import Groq from "groq-sdk";
 
-const groq = new OpenAI({
-	baseURL: "https://api.groq.com/openai/v1",
-	apiKey: process.env.GROQ_API_KEY,
-});
+const groq = new Groq();
 
 export async function assistant(base64: string) {
 	const file = await convertToFile(base64);

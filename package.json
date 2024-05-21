@@ -13,8 +13,8 @@
 		"@tabler/icons-react": "^3.4.0",
 		"clsx": "^2.1.1",
 		"geist": "^1.3.0",
+		"groq-sdk": "^0.3.3",
 		"next": "14.2.3",
-		"openai": "^4.47.1",
 		"react": "^18",
 		"react-dom": "^18",
 		"sonner": "^1.4.41"
