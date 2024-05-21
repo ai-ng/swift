@@ -93,13 +93,14 @@ export default function Home() {
 	return (
 		<form className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600">
 			<button
-				className={clsx(
-					"rounded-full bg-white dark:bg-black p-1 border border-neutral-300 dark:border-neutral-700 drop-shadow m-3 hover:scale-110 active:scale-90 transition ease-in-out",
-					{ "text-red-500": isRecording }
-				)}
+				className={clsx("p-3 box-border group", {
+					"text-red-500": isRecording,
+				})}
 				onClick={handleMicButtonClick}
 			>
-				<IconMicrophone />
+				<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
+					<IconMicrophone />
+				</div>
 			</button>
 
 			<input
@@ -113,7 +114,7 @@ export default function Home() {
 			<button
 				type="submit"
 				className={clsx(
-					"m-3 p-1 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white",
+					"p-4 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white",
 					{
 						"animate-spin": isPending,
 					}
