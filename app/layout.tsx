@@ -19,12 +19,12 @@ export default function RootLayout({
 			<body
 				className={clsx(
 					GeistSans.className,
-					"py-8 px-6 lg:p-10 bg-white min-h-dvh flex items-center justify-center"
+					"py-8 px-6 lg:p-10 dark:text-white bg-white dark:bg-black min-h-dvh flex items-center justify-center"
 				)}
 			>
 				{children}
 
-				<Toaster />
+				<Toaster richColors theme="system" />
 			</body>
 		</html>
 	);

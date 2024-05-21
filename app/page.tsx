@@ -91,10 +91,10 @@ export default function Home() {
 	}
 
 	return (
-		<form className="rounded-full bg-neutral-200 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400">
+		<form className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600">
 			<button
 				className={clsx(
-					"rounded-full bg-white p-1 border border-neutral-300 drop-shadow m-3 hover:scale-110 active:scale-90 transition ease-in-out",
+					"rounded-full bg-white dark:bg-black p-1 border border-neutral-300 dark:border-neutral-700 drop-shadow m-3 hover:scale-110 active:scale-90 transition ease-in-out",
 					{ "text-red-500": isRecording }
 				)}
 				onClick={handleMicButtonClick}
@@ -104,7 +104,7 @@ export default function Home() {
 
 			<input
 				type="text"
-				className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-700"
+				className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-700 dark:placeholder:text-neutral-300"
 				required
 				disabled={isRecording || isPending}
 				placeholder="Ask me anything"
@@ -112,9 +112,12 @@ export default function Home() {
 
 			<button
 				type="submit"
-				className={clsx("m-3 p-1 text-neutral-700 hover:text-black", {
-					"animate-spin": isPending,
-				})}
+				className={clsx(
+					"m-3 p-1 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white",
+					{
+						"animate-spin": isPending,
+					}
+				)}
 				disabled={isPending}
 			>
 				{isPending ? <IconLoader2 /> : <IconCornerDownLeft />}
