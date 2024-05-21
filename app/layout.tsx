@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import clsx from "clsx";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
 	title: "Swift",
@@ -25,6 +26,7 @@ export default function RootLayout({
 				{children}
 
 				<Toaster richColors theme="system" />
+				<Analytics />
 			</body>
 		</html>
 	);
