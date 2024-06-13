@@ -9,7 +9,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
-		"@ffmpeg/core": "0.11.0",
+		"@cartesia/cartesia-js": "1.0.0",
 		"@tabler/icons-react": "^3.4.0",
 		"@vercel/analytics": "^1.2.2",
 		"clsx": "^2.1.1",

@@ -9,12 +9,18 @@ import clsx from "clsx";
 import { assistant } from "@/app/actions";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useTTS } from "@cartesia/cartesia-js/react";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
 	const [isRecording, setIsRecording] = useState(false);
 	const recorder = useRef<MediaRecorder | null>(null);
 	const chunks = useRef<Array<Blob>>([]);
+
+	const tts = useTTS({
+		apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
+		sampleRate: 44100,
+	});
 
 	function dataAvailable(e: BlobEvent) {
 		chunks.current.push(e.data);
@@ -38,6 +44,7 @@ export default function Home() {
 				recorder.current.addEventListener("stop", () => {
 					setIsRecording(false);
 					startTransition(async () => {
+						console.log("stopped");
 						const blob = new Blob(chunks.current, {
 							type: "audio/webm",
 						});
@@ -46,9 +53,19 @@ export default function Home() {
 						const { error, text } = await assistant(base64);
 						if (error) {
 							toast.error(error);
-						} else {
-							toast(text);
+							return;
 						}
+
+						await tts.buffer({
+							model_id: "upbeat-moon",
+							voice: {
+								mode: "id",
+								id: "00a77add-48d5-4ef6-8157-71e5437b282d",
+							},
+							transcript: text,
+						});
+
+						tts.play();
 					});
 				});
 
