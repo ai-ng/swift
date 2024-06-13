@@ -10,12 +10,14 @@ import { assistant } from "@/app/actions";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useTTS } from "@cartesia/cartesia-js/react";
+import type { Messages } from "@/app/actions";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
 	const [isRecording, setIsRecording] = useState(false);
 	const recorder = useRef<MediaRecorder | null>(null);
 	const chunks = useRef<Array<Blob>>([]);
+	const messages = useRef<Messages>([]);
 
 	const tts = useTTS({
 		apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
@@ -50,9 +52,13 @@ export default function Home() {
 						});
 						chunks.current = [];
 						const base64 = await toBase64(blob);
-						const { error, text } = await assistant(base64);
-						if (error) {
-							toast.error(error);
+						const response = await assistant(
+							base64,
+							messages.current
+						);
+
+						if ("error" in response) {
+							toast.error(response.error);
 							return;
 						}
 
@@ -62,10 +68,20 @@ export default function Home() {
 								mode: "id",
 								id: "00a77add-48d5-4ef6-8157-71e5437b282d",
 							},
-							transcript: text,
+							transcript: response.text,
 						});
 
 						tts.play();
+
+						messages.current.push({
+							role: "user",
+							content: response.transcription,
+						});
+
+						messages.current.push({
+							role: "assistant",
+							content: response.text,
+						});
 					});
 				});
 
