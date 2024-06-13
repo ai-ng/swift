@@ -56,7 +56,7 @@ export default function Home() {
 							return;
 						}
 
-						await tts.buffer({
+						tts.buffer({
 							model_id: "upbeat-moon",
 							voice: {
 								mode: "id",
