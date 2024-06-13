@@ -17,6 +17,10 @@ export async function assistant(base64: string) {
 		return { error: "No audio detected." };
 	}
 
+	const time = new Date().toLocaleString("en-US", {
+		timeZone: headers().get("x-vercel-ip-timezone") || undefined,
+	});
+
 	const response = await groq.chat.completions.create({
 		model: "llama3-8b-8192",
 		messages: [
@@ -26,7 +30,10 @@ export async function assistant(base64: string) {
 				- Respond briefly to the user's request, and do not provide unnecessary information.
 				- If you don't understand the user's request, you can ask for clarification.
 				- If you aren't sure about something, say so.
+				- You do not have access to up-to-date information, so you should not provide real-time data.
+				- You are not capable of performing actions other than responding to the user.
 				${location()}
+				- The current time in the user's location is ${time}.
 				- You are based on Meta's Llama 3 model, the 8B version.
 				- You are running on Groq Cloud. Groq is an AI infrastructure company that builds fast inference technology.`,
 			},
