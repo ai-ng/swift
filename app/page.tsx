@@ -7,7 +7,13 @@ import {
 } from "@tabler/icons-react";
 import clsx from "clsx";
 import { assistant, type Messages } from "@/app/actions";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useTransition,
+} from "react";
 import { toast } from "sonner";
 import { useTTS } from "@cartesia/cartesia-js/react";
 
@@ -16,7 +22,6 @@ export default function Home() {
 	const [isRecording, setIsRecording] = useState(false);
 	const [input, setInput] = useState("");
 	const recorder = useRef<MediaRecorder | null>(null);
-	const chunks = useRef<Array<Blob>>([]);
 	const messages = useRef<Messages>([]);
 
 	const tts = useTTS({
@@ -24,29 +29,8 @@ export default function Home() {
 		sampleRate: 44100,
 	});
 
-	function dataAvailable(e: BlobEvent) {
-		chunks.current.push(e.data);
-	}
-
-	function submit(e?: React.FormEvent) {
-		if (e) e.preventDefault();
+	function submit(type: string, data: string) {
 		startTransition(async () => {
-			let type;
-			let data;
-
-			if (isRecording) {
-				type = "speech";
-				stopRecording();
-				const blob = new Blob(chunks.current, {
-					type: "audio/webm",
-				});
-				chunks.current = [];
-				data = await toBase64(blob);
-			} else {
-				type = "text";
-				data = input;
-			}
-
 			const response = await assistant({
 				type,
 				data,
@@ -102,11 +86,6 @@ export default function Home() {
 				recorder.current = new MediaRecorder(stream, {
 					mimeType,
 				});
-
-				recorder.current.addEventListener(
-					"dataavailable",
-					dataAvailable
-				);
 			})
 			.catch(() => {
 				return toast.error("Access to microphone was denied.");
@@ -127,8 +106,30 @@ export default function Home() {
 
 	function stopRecording() {
 		if (!recorder.current) return;
+		const chunks: Array<Blob> = [];
+
+		function dataAvailable(e: BlobEvent) {
+			chunks.push(e.data);
+		}
+
+		async function stop() {
+			const blob = new Blob(chunks, {
+				type: "audio/webm",
+			});
+			const data = await toBase64(blob);
+			submit("speech", data);
+
+			recorder.current?.removeEventListener(
+				"dataavailable",
+				dataAvailable
+			);
+			recorder.current?.removeEventListener("stop", stop);
+		}
+
+		recorder.current.addEventListener("dataavailable", dataAvailable);
+		recorder.current.addEventListener("stop", stop);
+
 		recorder.current.stop();
-		recorder.current.removeEventListener("dataavailable", dataAvailable);
 		setIsRecording(false);
 	}
 
@@ -136,16 +137,22 @@ export default function Home() {
 		e.preventDefault();
 
 		if (isRecording) {
-			submit();
+			stopRecording();
 		} else {
 			startRecording();
 		}
 	}
 
+	function handleFormSubmit(e: React.FormEvent) {
+		e.preventDefault();
+		if (isRecording) return stopRecording();
+		submit("text", input);
+	}
+
 	return (
 		<form
 			className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
-			onSubmit={submit}
+			onSubmit={handleFormSubmit}
 		>
 			<button
 				className={clsx("p-3 box-border group", {
