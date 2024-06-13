@@ -105,7 +105,7 @@ async function getText(data: string, type: string) {
 			file,
 			model: "whisper-large-v3",
 		});
-		return text;
+		return text.trim();
 	} catch {
 		return ""; // Empty audio file
 	}
