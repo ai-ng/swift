@@ -26,23 +26,23 @@ type SuccessResult = {
 
 type AssistantResult = ErrorResult | SuccessResult;
 
-export async function assistant(
-	base64: string,
-	prevMessages: Messages
-): Promise<AssistantResult> {
-	const file = await convertToFile(base64);
-
-	const { text } = await groq.audio.transcriptions.create({
-		file,
-		model: "whisper-large-v3",
-	});
+export async function assistant({
+	data,
+	type,
+	prevMessages,
+}: {
+	data: string;
+	type: string;
+	prevMessages: Messages;
+}): Promise<AssistantResult> {
+	const text = await getText(data, type);
 
 	if (text.trim().length === 0) {
 		return { error: "No audio detected." };
 	}
 
-	const result = MessagesSchema.safeParse(prevMessages);
-	if (!result.success) {
+	const { success } = MessagesSchema.safeParse(prevMessages);
+	if (!success) {
 		return { error: "Invalid messages." };
 	}
 
@@ -80,13 +80,6 @@ export async function assistant(
 	};
 }
 
-export async function convertToFile(base64: string) {
-	const res = await fetch(base64);
-	const blob = await res.blob();
-	const extension = blob.type.split("/")[1];
-	return new File([blob], `audio.${extension}`, { type: blob.type });
-}
-
 function location() {
 	const headersList = headers();
 
@@ -97,4 +90,23 @@ function location() {
 	if (!country || !region || !city) return "- User location is unknown.";
 
 	return `- User is currently in ${city}, ${region}, ${country}.`;
+}
+
+async function getText(data: string, type: string) {
+	if (type === "text") return data;
+
+	const res = await fetch(data);
+	const blob = await res.blob();
+	const extension = blob.type.split("/")[1];
+	const file = new File([blob], `audio.${extension}`, { type: blob.type });
+
+	try {
+		const { text } = await groq.audio.transcriptions.create({
+			file,
+			model: "whisper-large-v3",
+		});
+		return text;
+	} catch {
+		return ""; // Empty audio file
+	}
 }

@@ -6,15 +6,15 @@ import {
 	IconMicrophone,
 } from "@tabler/icons-react";
 import clsx from "clsx";
-import { assistant } from "@/app/actions";
+import { assistant, type Messages } from "@/app/actions";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useTTS } from "@cartesia/cartesia-js/react";
-import type { Messages } from "@/app/actions";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
 	const [isRecording, setIsRecording] = useState(false);
+	const [input, setInput] = useState("");
 	const recorder = useRef<MediaRecorder | null>(null);
 	const chunks = useRef<Array<Blob>>([]);
 	const messages = useRef<Messages>([]);
@@ -26,6 +26,63 @@ export default function Home() {
 
 	function dataAvailable(e: BlobEvent) {
 		chunks.current.push(e.data);
+	}
+
+	function submit(e?: React.FormEvent) {
+		if (e) e.preventDefault();
+		startTransition(async () => {
+			let type;
+			let data;
+
+			if (isRecording) {
+				type = "speech";
+				stopRecording();
+				const blob = new Blob(chunks.current, {
+					type: "audio/webm",
+				});
+				chunks.current = [];
+				data = await toBase64(blob);
+			} else {
+				type = "text";
+				data = input;
+			}
+
+			const response = await assistant({
+				type,
+				data,
+				prevMessages: messages.current,
+			});
+
+			if ("error" in response) {
+				toast.error(response.error);
+				return;
+			}
+
+			setInput(response.transcription);
+
+			tts.buffer({
+				model_id: "upbeat-moon",
+				voice: {
+					mode: "id",
+					id: "00a77add-48d5-4ef6-8157-71e5437b282d",
+				},
+				transcript: response.text,
+			});
+
+			tts.play();
+
+			toast(response.text); // TODO: better UI for showing messages or remove this
+
+			messages.current.push({
+				role: "user",
+				content: response.transcription,
+			});
+
+			messages.current.push({
+				role: "assistant",
+				content: response.text,
+			});
+		});
 	}
 
 	const getRecorder = useCallback(() => {
@@ -41,48 +98,6 @@ export default function Home() {
 
 				recorder.current = new MediaRecorder(stream, {
 					mimeType,
-				});
-
-				recorder.current.addEventListener("stop", () => {
-					setIsRecording(false);
-					startTransition(async () => {
-						console.log("stopped");
-						const blob = new Blob(chunks.current, {
-							type: "audio/webm",
-						});
-						chunks.current = [];
-						const base64 = await toBase64(blob);
-						const response = await assistant(
-							base64,
-							messages.current
-						);
-
-						if ("error" in response) {
-							toast.error(response.error);
-							return;
-						}
-
-						tts.buffer({
-							model_id: "upbeat-moon",
-							voice: {
-								mode: "id",
-								id: "00a77add-48d5-4ef6-8157-71e5437b282d",
-							},
-							transcript: response.text,
-						});
-
-						tts.play();
-
-						messages.current.push({
-							role: "user",
-							content: response.transcription,
-						});
-
-						messages.current.push({
-							role: "assistant",
-							content: response.text,
-						});
-					});
 				});
 
 				recorder.current.addEventListener(
@@ -111,25 +126,30 @@ export default function Home() {
 		if (!recorder.current) return;
 		recorder.current.stop();
 		recorder.current.removeEventListener("dataavailable", dataAvailable);
+		setIsRecording(false);
 	}
 
 	function handleMicButtonClick(e: React.MouseEvent) {
 		e.preventDefault();
 
 		if (isRecording) {
-			stopRecording();
+			submit();
 		} else {
 			startRecording();
 		}
 	}
 
 	return (
-		<form className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600">
+		<form
+			className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
+			onSubmit={submit}
+		>
 			<button
 				className={clsx("p-3 box-border group", {
 					"text-red-500": isRecording,
 				})}
 				onClick={handleMicButtonClick}
+				type="button"
 			>
 				<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
 					<IconMicrophone />
@@ -142,6 +162,8 @@ export default function Home() {
 				required
 				disabled={isRecording || isPending}
 				placeholder="Ask me anything"
+				value={input}
+				onChange={(e) => setInput(e.target.value)}
 			/>
 
 			<button
