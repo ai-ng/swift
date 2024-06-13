@@ -61,9 +61,9 @@ export async function assistant({
 			- If you aren't sure about something, say so.
 			- You do not have access to up-to-date information, so you should not provide real-time data.
 			- You are not capable of performing actions other than responding to the user.
-			${location()}
+			- ${location()}
 			- The current time in the user's location is ${time}.
-			- You are based on Meta's Llama 3 model, the 8B version.
+			- You are based on Meta's Llama 3 model, the 8B parameter version.
 			- You are running on Groq Cloud. Groq is an AI infrastructure company that builds fast inference technology.`,
 			},
 			...prevMessages,
@@ -87,9 +87,9 @@ function location() {
 	const region = headersList.get("x-vercel-ip-country-region");
 	const city = headersList.get("x-vercel-ip-city");
 
-	if (!country || !region || !city) return "- User location is unknown.";
+	if (!country || !region || !city) return "User location is unknown.";
 
-	return `- User is currently in ${city}, ${region}, ${country}.`;
+	return `User is currently in ${city}, ${region}, ${country}.`;
 }
 
 async function getText(data: string, type: string) {
