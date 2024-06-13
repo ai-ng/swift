@@ -71,7 +71,9 @@ export default function Home() {
 
 			tts.play();
 
-			toast(response.text); // TODO: better UI for showing messages or remove this
+			toast(response.text, {
+				duration: Math.max(response.text.length * 75, 5000),
+			}); // TODO: better UI for showing messages or remove this
 
 			messages.current.push({
 				role: "user",
