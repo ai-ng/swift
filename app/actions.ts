@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 const groq = new Groq();
 
 export async function assistant(base64: string) {
-	console.log("location", location());
 	const file = await convertToFile(base64);
 
 	const { text } = await groq.audio.transcriptions.create({
@@ -23,8 +22,13 @@ export async function assistant(base64: string) {
 		messages: [
 			{
 				role: "system",
-				content:
-					"You are a voice assistant named Swift who is helping a user. Respond briefly to the user's requests.",
+				content: `- You are a friendly and helpful voice assistant named Swift.
+				- Respond briefly to the user's request, and do not provide unnecessary information.
+				- If you don't understand the user's request, you can ask for clarification.
+				- If you aren't sure about something, say so.
+				${location()}
+				- You are based on Meta's Llama 3 model, the 8B version.
+				- You are running on Groq Cloud. Groq is an AI infrastructure company that builds fast inference technology.`,
 			},
 			{
 				role: "user",
@@ -45,11 +49,12 @@ export async function convertToFile(base64: string) {
 
 function location() {
 	const headersList = headers();
-	if (!headersList.has("x-vercel-ip-country")) return null; // Not on Vercel
 
-	return {
-		country: headersList.get("x-vercel-ip-country"),
-		region: headersList.get("x-vercel-ip-country-region"),
-		city: headersList.get("x-vercel-ip-city"),
-	};
+	const country = headersList.get("x-vercel-ip-country");
+	const region = headersList.get("x-vercel-ip-country-region");
+	const city = headersList.get("x-vercel-ip-city");
+
+	if (!country || !region || !city) return "- User location is unknown.";
+
+	return `- User is currently in ${city}, ${region}, ${country}.`;
 }
