@@ -75,15 +75,16 @@ export default function Home() {
 				duration: Math.max(response.text.length * 75, 5000),
 			}); // TODO: better UI for showing messages or remove this
 
-			messages.current.push({
-				role: "user",
-				content: response.transcription,
-			});
-
-			messages.current.push({
-				role: "assistant",
-				content: response.text,
-			});
+			messages.current.push(
+				{
+					role: "user",
+					content: response.transcription,
+				},
+				{
+					role: "assistant",
+					content: response.text,
+				}
+			);
 		});
 	}
 
