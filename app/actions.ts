@@ -1,10 +1,12 @@
 "use server";
 
 import Groq from "groq-sdk";
+import { headers } from "next/headers";
 
 const groq = new Groq();
 
 export async function assistant(base64: string) {
+	console.log("location", location());
 	const file = await convertToFile(base64);
 
 	const { text } = await groq.audio.transcriptions.create({
@@ -39,4 +41,15 @@ export async function convertToFile(base64: string) {
 	const blob = await res.blob();
 	const extension = blob.type.split("/")[1];
 	return new File([blob], `audio.${extension}`, { type: blob.type });
+}
+
+function location() {
+	const headersList = headers();
+	if (!headersList.has("x-vercel-ip-country")) return null; // Not on Vercel
+
+	return {
+		country: headersList.get("x-vercel-ip-country"),
+		region: headersList.get("x-vercel-ip-country-region"),
+		city: headersList.get("x-vercel-ip-city"),
+	};
 }
