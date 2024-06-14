@@ -18,7 +18,7 @@ export default function Home() {
 	const [isRecording, setIsRecording] = useState(false);
 	const [input, setInput] = useState("");
 	const recorder = useRef<MediaRecorder | null>(null);
-	const recordingSince = useRef<number>(0);
+	const recordingSince = useRef<number | null>(null);
 	const messages = useRef<Messages>([]);
 
 	const tts = useTTS({
@@ -105,7 +105,10 @@ export default function Home() {
 	function stopRecording() {
 		if (!recorder.current) return;
 		setIsRecording(false);
-		if (Date.now() - recordingSince.current < 500) {
+		if (
+			!recordingSince.current ||
+			Date.now() - recordingSince.current < 500
+		) {
 			toast.info(
 				"Hold the button or spacebar for at least 1 second to record."
 			);
@@ -135,6 +138,7 @@ export default function Home() {
 		recorder.current.addEventListener("stop", stop);
 
 		recorder.current.stop();
+		recordingSince.current = null;
 	}
 
 	function handleButtonDown(
