@@ -48,7 +48,7 @@ export default function Home() {
 				model_id: "upbeat-moon",
 				voice: {
 					mode: "id",
-					id: "00a77add-48d5-4ef6-8157-71e5437b282d",
+					id: "248be419-c632-4f23-adf1-5324ed7dbf1d",
 				},
 				transcript: response.text,
 			});
@@ -56,7 +56,7 @@ export default function Home() {
 			tts.play();
 
 			toast(response.text, {
-				duration: Math.max(response.text.length * 75, 5000),
+				duration: Math.max(response.text.length * 50, 5000),
 			}); // TODO: better UI for showing messages or remove this
 
 			messages.current.push(
