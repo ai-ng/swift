@@ -1,10 +1,5 @@
 "use client";
 
-import {
-	IconCornerDownLeft,
-	IconLoader2,
-	IconMicrophone,
-} from "@tabler/icons-react";
 import clsx from "clsx";
 import { assistant, type Messages } from "@/app/actions";
 import React, {
@@ -16,6 +11,7 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 import { useTTS } from "@cartesia/cartesia-js/react";
+import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/app/icons";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
@@ -185,7 +181,7 @@ export default function Home() {
 				type="button"
 			>
 				<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
-					<IconMicrophone />
+					<MicrophoneIcon />
 				</div>
 			</button>
 
@@ -201,15 +197,10 @@ export default function Home() {
 
 			<button
 				type="submit"
-				className={clsx(
-					"p-4 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white",
-					{
-						"animate-spin": isPending,
-					}
-				)}
+				className="p-4 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white"
 				disabled={isPending}
 			>
-				{isPending ? <IconLoader2 /> : <IconCornerDownLeft />}
+				{isPending ? <LoadingIcon /> : <EnterIcon />}
 			</button>
 		</form>
 	);
