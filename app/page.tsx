@@ -137,7 +137,9 @@ export default function Home() {
 		recorder.current.stop();
 	}
 
-	function handleButtonDown(e: KeyboardEvent | React.MouseEvent) {
+	function handleButtonDown(
+		e: KeyboardEvent | React.MouseEvent | React.TouchEvent
+	) {
 		if (e.target instanceof HTMLInputElement) return;
 		if (e instanceof KeyboardEvent && e.key !== " ") return;
 		if (e instanceof KeyboardEvent && e.repeat) return;
@@ -145,7 +147,9 @@ export default function Home() {
 		startRecording();
 	}
 
-	function handleButtonUp(e: KeyboardEvent | React.MouseEvent) {
+	function handleButtonUp(
+		e: KeyboardEvent | React.MouseEvent | React.TouchEvent
+	) {
 		if (e.target instanceof HTMLInputElement) return;
 		if (e instanceof KeyboardEvent && e.key !== " ") return;
 		e.preventDefault();
@@ -176,6 +180,8 @@ export default function Home() {
 				className={clsx("p-3 box-border group", {
 					"text-red-500": isRecording,
 				})}
+				onTouchStart={handleButtonDown}
+				onTouchEnd={handleButtonUp}
 				onMouseDown={handleButtonDown}
 				onMouseUp={handleButtonUp}
 				type="button"
