@@ -22,6 +22,7 @@ export default function Home() {
 	const [isRecording, setIsRecording] = useState(false);
 	const [input, setInput] = useState("");
 	const recorder = useRef<MediaRecorder | null>(null);
+	const recordingSince = useRef<number>(0);
 	const messages = useRef<Messages>([]);
 
 	const tts = useTTS({
@@ -102,10 +103,17 @@ export default function Home() {
 
 		recorder.current.start();
 		setIsRecording(true);
+		recordingSince.current = Date.now();
 	}
 
 	function stopRecording() {
 		if (!recorder.current) return;
+		if (Date.now() - recordingSince.current < 1000) {
+			toast.info(
+				"Hold the button or spacebar for at least 1 second to record."
+			);
+			return;
+		}
 		const chunks: Array<Blob> = [];
 
 		function dataAvailable(e: BlobEvent) {
@@ -133,14 +141,19 @@ export default function Home() {
 		setIsRecording(false);
 	}
 
-	function handleMicButtonClick(e: React.MouseEvent) {
+	function handleButtonDown(e: KeyboardEvent | React.MouseEvent) {
+		if (e.target instanceof HTMLInputElement) return;
+		if (e instanceof KeyboardEvent && e.key !== " ") return;
+		if (e instanceof KeyboardEvent && e.repeat) return;
 		e.preventDefault();
+		startRecording();
+	}
 
-		if (isRecording) {
-			stopRecording();
-		} else {
-			startRecording();
-		}
+	function handleButtonUp(e: KeyboardEvent | React.MouseEvent) {
+		if (e.target instanceof HTMLInputElement) return;
+		if (e instanceof KeyboardEvent && e.key !== " ") return;
+		e.preventDefault();
+		stopRecording();
 	}
 
 	function handleFormSubmit(e: React.FormEvent) {
@@ -148,6 +161,15 @@ export default function Home() {
 		if (isRecording) return stopRecording();
 		submit("text", input);
 	}
+
+	useEffect(() => {
+		window.addEventListener("keydown", handleButtonDown);
+		window.addEventListener("keyup", handleButtonUp);
+		return () => {
+			window.removeEventListener("keydown", handleButtonDown);
+			window.removeEventListener("keyup", handleButtonUp);
+		};
+	}, []);
 
 	return (
 		<form
@@ -158,7 +180,8 @@ export default function Home() {
 				className={clsx("p-3 box-border group", {
 					"text-red-500": isRecording,
 				})}
-				onClick={handleMicButtonClick}
+				onMouseDown={handleButtonDown}
+				onMouseUp={handleButtonUp}
 				type="button"
 			>
 				<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
