@@ -108,7 +108,8 @@ export default function Home() {
 
 	function stopRecording() {
 		if (!recorder.current) return;
-		if (Date.now() - recordingSince.current < 1000) {
+		setIsRecording(false);
+		if (Date.now() - recordingSince.current < 500) {
 			toast.info(
 				"Hold the button or spacebar for at least 1 second to record."
 			);
@@ -138,7 +139,6 @@ export default function Home() {
 		recorder.current.addEventListener("stop", stop);
 
 		recorder.current.stop();
-		setIsRecording(false);
 	}
 
 	function handleButtonDown(e: KeyboardEvent | React.MouseEvent) {
