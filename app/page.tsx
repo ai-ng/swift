@@ -26,48 +26,51 @@ export default function Home() {
 		sampleRate: 44100,
 	});
 
-	function submit(type: string, data: string) {
-		startTransition(async () => {
-			const response = await assistant({
-				type,
-				data,
-				prevMessages: messages.current,
-			});
+	const submit = useCallback(
+		(type: string, data: string) => {
+			startTransition(async () => {
+				const response = await assistant({
+					type,
+					data,
+					prevMessages: messages.current,
+				});
 
-			if ("error" in response) {
-				toast.error(response.error);
-				return;
-			}
-
-			setInput(response.transcription);
-
-			tts.buffer({
-				model_id: "upbeat-moon",
-				voice: {
-					mode: "id",
-					id: "248be419-c632-4f23-adf1-5324ed7dbf1d",
-				},
-				transcript: response.text,
-			});
-
-			tts.play();
-
-			toast(response.text, {
-				duration: Math.max(response.text.length * 50, 5000),
-			}); // TODO: better UI for showing messages or remove this
-
-			messages.current.push(
-				{
-					role: "user",
-					content: response.transcription,
-				},
-				{
-					role: "assistant",
-					content: response.text,
+				if ("error" in response) {
+					toast.error(response.error);
+					return;
 				}
-			);
-		});
-	}
+
+				setInput(response.transcription);
+
+				tts.buffer({
+					model_id: "upbeat-moon",
+					voice: {
+						mode: "id",
+						id: "248be419-c632-4f23-adf1-5324ed7dbf1d",
+					},
+					transcript: response.text,
+				});
+
+				tts.play();
+
+				toast(response.text, {
+					duration: Math.max(response.text.length * 50, 5000),
+				}); // TODO: better UI for showing messages or remove this
+
+				messages.current.push(
+					{
+						role: "user",
+						content: response.transcription,
+					},
+					{
+						role: "assistant",
+						content: response.text,
+					}
+				);
+			});
+		},
+		[tts]
+	);
 
 	const getRecorder = useCallback(() => {
 		navigator.mediaDevices
@@ -93,16 +96,16 @@ export default function Home() {
 		getRecorder();
 	}, [getRecorder]);
 
-	function startRecording() {
+	const startRecording = useCallback(() => {
 		if (!recorder.current) getRecorder();
 		if (!recorder.current) return;
 
 		recorder.current.start();
 		setIsRecording(true);
 		recordingSince.current = Date.now();
-	}
+	}, [getRecorder]);
 
-	function stopRecording() {
+	const stopRecording = useCallback(() => {
 		if (!recorder.current) return;
 		setIsRecording(false);
 		if (
@@ -139,26 +142,28 @@ export default function Home() {
 
 		recorder.current.stop();
 		recordingSince.current = null;
-	}
+	}, [submit]);
 
-	function handleButtonDown(
-		e: KeyboardEvent | React.MouseEvent | React.TouchEvent
-	) {
-		if (e.target instanceof HTMLInputElement) return;
-		if (e instanceof KeyboardEvent && e.key !== " ") return;
-		if (e instanceof KeyboardEvent && e.repeat) return;
-		e.preventDefault();
-		startRecording();
-	}
+	const handleButtonDown = useCallback(
+		(e: KeyboardEvent | React.MouseEvent | React.TouchEvent) => {
+			if (e.target instanceof HTMLInputElement) return;
+			if (e instanceof KeyboardEvent && e.key !== " ") return;
+			if (e instanceof KeyboardEvent && e.repeat) return;
+			e.preventDefault();
+			startRecording();
+		},
+		[startRecording]
+	);
 
-	function handleButtonUp(
-		e: KeyboardEvent | React.MouseEvent | React.TouchEvent
-	) {
-		if (e.target instanceof HTMLInputElement) return;
-		if (e instanceof KeyboardEvent && e.key !== " ") return;
-		e.preventDefault();
-		stopRecording();
-	}
+	const handleButtonUp = useCallback(
+		(e: KeyboardEvent | React.MouseEvent | React.TouchEvent) => {
+			if (e.target instanceof HTMLInputElement) return;
+			if (e instanceof KeyboardEvent && e.key !== " ") return;
+			e.preventDefault();
+			stopRecording();
+		},
+		[stopRecording]
+	);
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -173,7 +178,7 @@ export default function Home() {
 			window.removeEventListener("keydown", handleButtonDown);
 			window.removeEventListener("keyup", handleButtonUp);
 		};
-	}, []);
+	}, [handleButtonDown, handleButtonUp]);
 
 	return (
 		<form
