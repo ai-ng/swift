@@ -27,10 +27,9 @@ export default function Home() {
 	});
 
 	const submit = useCallback(
-		(type: string, data: string) => {
+		(data: string | FormData) => {
 			startTransition(async () => {
 				const response = await assistant({
-					type,
 					data,
 					prevMessages: messages.current,
 				});
@@ -127,8 +126,9 @@ export default function Home() {
 			const blob = new Blob(chunks, {
 				type: "audio/webm",
 			});
-			const data = await toBase64(blob);
-			submit("speech", data);
+			const data = new FormData();
+			data.append("audio", blob, "audio.webm");
+			submit(data);
 
 			recorder.current?.removeEventListener(
 				"dataavailable",
@@ -168,7 +168,7 @@ export default function Home() {
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		if (isRecording) return stopRecording();
-		submit("text", input);
+		submit(input);
 	}
 
 	useEffect(() => {
@@ -219,18 +219,6 @@ export default function Home() {
 			</button>
 		</form>
 	);
-}
-
-function toBase64(blob: Blob): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.readAsDataURL(blob);
-		reader.onload = () => {
-			if (typeof reader.result !== "string") return;
-			resolve(reader.result);
-		};
-		reader.onerror = (error) => reject(error);
-	});
 }
 
 const types = ["audio/webm", "video/mp4", "audio/mpeg", "audio/wav"];

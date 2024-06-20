@@ -28,14 +28,12 @@ type AssistantResult = ErrorResult | SuccessResult;
 
 export async function assistant({
 	data,
-	type,
 	prevMessages,
 }: {
-	data: string;
-	type: string;
+	data: string | FormData;
 	prevMessages: Messages;
 }): Promise<AssistantResult> {
-	const text = await getText(data, type);
+	const text = await getText(data);
 
 	if (text.trim().length === 0) {
 		return { error: "No audio detected." };
@@ -92,11 +90,11 @@ function location() {
 	return `User is currently in ${city}, ${region}, ${country}.`;
 }
 
-async function getText(data: string, type: string) {
-	if (type === "text") return data;
+async function getText(data: string | FormData) {
+	if (typeof data === "string") return data;
 
-	const res = await fetch(data);
-	const blob = await res.blob();
+	const blob = data.get("audio") as Blob | null;
+	if (!blob) return "";
 	const extension = blob.type.split("/")[1];
 	const file = new File([blob], `audio.${extension}`, { type: blob.type });
 
