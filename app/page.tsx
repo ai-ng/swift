@@ -23,7 +23,7 @@ export default function Home() {
 
 	const tts = useTTS({
 		apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
-		sampleRate: 44100,
+		sampleRate: 24000,
 	});
 
 	const submit = useCallback(
