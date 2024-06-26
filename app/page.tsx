@@ -42,7 +42,7 @@ export default function Home() {
 				setInput(response.transcription);
 
 				tts.buffer({
-					model_id: "upbeat-moon",
+					model_id: "sonic-english",
 					voice: {
 						mode: "id",
 						id: "248be419-c632-4f23-adf1-5324ed7dbf1d",
@@ -54,7 +54,7 @@ export default function Home() {
 
 				toast(response.text, {
 					duration: Math.max(response.text.length * 50, 5000),
-				}); // TODO: better UI for showing messages or remove this
+				});
 
 				messages.current.push(
 					{
