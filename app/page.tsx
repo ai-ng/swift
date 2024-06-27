@@ -29,6 +29,7 @@ export default function Home() {
 	const submit = useCallback(
 		(data: string | FormData) => {
 			startTransition(async () => {
+				const submittedAt = Date.now();
 				const response = await assistant({
 					data,
 					prevMessages: messages.current,
@@ -51,6 +52,7 @@ export default function Home() {
 				});
 
 				tts.play();
+				toast.info(`${Date.now() - submittedAt}ms`);
 
 				toast(response.text, {
 					duration: Math.max(response.text.length * 50, 5000),
