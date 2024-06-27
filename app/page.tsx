@@ -45,7 +45,7 @@ export default function Home() {
 					model_id: "sonic-english",
 					voice: {
 						mode: "id",
-						id: "248be419-c632-4f23-adf1-5324ed7dbf1d",
+						id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
 					},
 					transcript: response.text,
 				});
