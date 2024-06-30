@@ -24,9 +24,7 @@ export async function POST(request: Request) {
 	if (!success) return new Response("Invalid request", { status: 400 });
 
 	const text = await getText(data.input);
-	if (!text) {
-		return { error: "No audio detected." };
-	}
+	if (!text) return new Response("Invalid audio", { status: 400 });
 
 	const groqResponse = await groq.chat.completions.create({
 		model: "llama3-8b-8192",
