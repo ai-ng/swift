@@ -3,52 +3,32 @@
 import Groq from "groq-sdk";
 import { headers } from "next/headers";
 import { z } from "zod";
+import { zfd } from "zod-form-data";
 
 const groq = new Groq();
 
-const MessagesSchema = z.array(
-	z.object({
-		role: z.enum(["user", "assistant"]),
-		content: z.string(),
-	})
-);
+const schema = zfd.formData({
+	input: z.union([zfd.text(), zfd.file()]),
+	message: zfd.repeatableOfType(
+		zfd.json(
+			z.object({
+				role: z.enum(["user", "assistant"]),
+				content: z.string(),
+			})
+		)
+	),
+});
 
-export type Messages = z.infer<typeof MessagesSchema>;
+export async function POST(request: Request) {
+	const { data, success } = schema.safeParse(await request.formData());
+	if (!success) return new Response("Invalid request", { status: 400 });
 
-type ErrorResult = {
-	error: string;
-};
-
-type SuccessResult = {
-	transcription: string;
-	text: string;
-};
-
-type AssistantResult = ErrorResult | SuccessResult;
-
-export async function assistant({
-	data,
-	prevMessages,
-}: {
-	data: string | FormData;
-	prevMessages: Messages;
-}): Promise<AssistantResult> {
-	const text = await getText(data);
-
-	if (text.trim().length === 0) {
+	const text = await getText(data.input);
+	if (!text) {
 		return { error: "No audio detected." };
 	}
 
-	const { success } = MessagesSchema.safeParse(prevMessages);
-	if (!success) {
-		return { error: "Invalid messages." };
-	}
-
-	const time = new Date().toLocaleString("en-US", {
-		timeZone: headers().get("x-vercel-ip-timezone") || undefined,
-	});
-
-	const response = await groq.chat.completions.create({
+	const groqResponse = await groq.chat.completions.create({
 		model: "llama3-8b-8192",
 		messages: [
 			{
@@ -60,12 +40,12 @@ export async function assistant({
 			- You are not capable of performing actions other than responding to the user.
 			- Do not use markdown, emojis, or other formatting in your responses. Respond in a way easily spoken by text-to-speech software.
 			- User location is ${location()}.
-			- The current time is ${time}.
+			- The current time is ${time()}.
 			- Your large language model is Llama 3, created by Meta, the 8 billion parameter version. It is hosted on Groq, an AI infrastructure company that builds fast inference technology.
 			- Your text-to-speech model is Sonic, created and hosted by Cartesia, a company that builds fast and realistic speech synthesis technology.
 			- You are built with Next.js and hosted on Vercel.`,
 			},
-			...prevMessages,
+			...data.message,
 			{
 				role: "user",
 				content: text,
@@ -73,10 +53,36 @@ export async function assistant({
 		],
 	});
 
-	return {
-		transcription: text,
-		text: response.choices[0].message.content,
-	};
+	const response = groqResponse.choices[0].message.content;
+
+	const voice = await fetch("https://api.cartesia.ai/tts/bytes", {
+		method: "POST",
+		headers: {
+			"Cartesia-Version": "2024-06-30",
+			"Content-Type": "application/json",
+			"X-API-Key": process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
+		},
+		body: JSON.stringify({
+			model_id: "sonic-english",
+			transcript: response,
+			voice: {
+				mode: "id",
+				id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+			},
+			output_format: {
+				container: "raw",
+				encoding: "pcm_s16le",
+				sample_rate: 24000,
+			},
+		}),
+	});
+
+	return new Response(voice.body, {
+		headers: {
+			"X-Transcription": text,
+			"X-Response": response,
+		},
+	});
 }
 
 function location() {
@@ -91,21 +97,22 @@ function location() {
 	return `${city}, ${region}, ${country}`;
 }
 
-async function getText(data: string | FormData) {
-	if (typeof data === "string") return data;
+function time() {
+	return new Date().toLocaleString("en-US", {
+		timeZone: headers().get("x-vercel-ip-timezone") || undefined,
+	});
+}
 
-	const blob = data.get("audio") as Blob | null;
-	if (!blob) return "";
-	const extension = blob.type.split("/")[1];
-	const file = new File([blob], `audio.${extension}`, { type: blob.type });
+async function getText(input: string | File) {
+	if (typeof input === "string") return input;
 
 	try {
 		const { text } = await groq.audio.transcriptions.create({
-			file,
+			file: input,
 			model: "whisper-large-v3",
 		});
-		return text.trim();
+		return text.trim() || null;
 	} catch {
-		return ""; // Empty audio file
+		return null; // Empty audio file
 	}
 }

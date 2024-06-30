@@ -18,7 +18,8 @@
 		"react": "^18",
 		"react-dom": "^18",
 		"sonner": "^1.4.41",
-		"zod": "^3.23.8"
+		"zod": "^3.23.8",
+		"zod-form-data": "^2.0.2"
 	},
 	"devDependencies": {
 		"@types/node": "^20",

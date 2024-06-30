@@ -1,7 +1,6 @@
 "use client";
 
 import clsx from "clsx";
-import { assistant, type Messages } from "@/app/actions";
 import React, {
 	useCallback,
 	useEffect,
@@ -10,7 +9,6 @@ import React, {
 	useTransition,
 } from "react";
 import { toast } from "sonner";
-import { useTTS } from "@cartesia/cartesia-js/react";
 import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/app/icons";
 
 export default function Home() {
@@ -19,59 +17,60 @@ export default function Home() {
 	const [input, setInput] = useState("");
 	const recorder = useRef<MediaRecorder | null>(null);
 	const recordingSince = useRef<number | null>(null);
-	const messages = useRef<Messages>([]);
+	const messages = useRef<Array<object>>([]);
 
-	const tts = useTTS({
-		apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
-		sampleRate: 24000,
-	});
+	const submit = useCallback((data: string | Blob) => {
+		startTransition(async () => {
+			const formData = new FormData();
 
-	const submit = useCallback(
-		(data: string | FormData) => {
-			startTransition(async () => {
-				const submittedAt = Date.now();
-				const response = await assistant({
-					data,
-					prevMessages: messages.current,
-				});
+			if (typeof data === "string") {
+				formData.append("input", data);
+			} else {
+				formData.append("input", data, "audio.webm");
+			}
 
-				if ("error" in response) {
-					toast.error(response.error);
-					return;
-				}
+			for (const message of messages.current) {
+				formData.append("message", JSON.stringify(message));
+			}
 
-				setInput(response.transcription);
+			const submittedAt = Date.now();
 
-				tts.buffer({
-					model_id: "sonic-english",
-					voice: {
-						mode: "id",
-						id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
-					},
-					transcript: response.text,
-				});
-
-				tts.play();
-				toast.info(`${Date.now() - submittedAt}ms`);
-
-				toast(response.text, {
-					duration: Math.max(response.text.length * 50, 5000),
-				});
-
-				messages.current.push(
-					{
-						role: "user",
-						content: response.transcription,
-					},
-					{
-						role: "assistant",
-						content: response.text,
-					}
-				);
+			const response = await fetch("/api/audio", {
+				method: "POST",
+				body: formData,
 			});
-		},
-		[tts]
-	);
+
+			const transcription = response.headers.get("X-Transcription");
+			const text = response.headers.get("X-Response");
+			if (!transcription || !text) return;
+
+			if (!response.ok || !transcription || !text || !response.body) {
+				toast.error("An error occurred."); // TODO: Show error message
+				return;
+			}
+
+			// TODO: Play audio
+
+			setInput(transcription);
+
+			toast.info(`${Date.now() - submittedAt}ms`);
+
+			toast(text, {
+				duration: Math.max(response.text.length * 50, 5000),
+			});
+
+			messages.current.push(
+				{
+					role: "user",
+					content: transcription,
+				},
+				{
+					role: "assistant",
+					content: text,
+				}
+			);
+		});
+	}, []);
 
 	const getRecorder = useCallback(() => {
 		navigator.mediaDevices
@@ -128,9 +127,8 @@ export default function Home() {
 			const blob = new Blob(chunks, {
 				type: "audio/webm",
 			});
-			const data = new FormData();
-			data.append("audio", blob, "audio.webm");
-			submit(data);
+
+			submit(blob);
 
 			recorder.current?.removeEventListener(
 				"dataavailable",
