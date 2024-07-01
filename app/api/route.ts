@@ -1,5 +1,3 @@
-"use server";
-
 import Groq from "groq-sdk";
 import { headers } from "next/headers";
 import { z } from "zod";

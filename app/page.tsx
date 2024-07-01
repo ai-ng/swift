@@ -51,7 +51,7 @@ export default function Home() {
 
 			const submittedAt = Date.now();
 
-			const response = await fetch("/api/audio", {
+			const response = await fetch("/api", {
 				method: "POST",
 				body: formData,
 			});
