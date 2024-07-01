@@ -9,12 +9,13 @@ import React, {
 	useTransition,
 } from "react";
 import { toast } from "sonner";
-import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/app/icons";
+import { ClockIcon, EnterIcon, LoadingIcon, MicrophoneIcon } from "@/app/icons";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
 	const [isRecording, setIsRecording] = useState(false);
 	const [input, setInput] = useState("");
+	const [latency, setLatency] = useState<number | null>(null);
 	const recorder = useRef<MediaRecorder | null>(null);
 	const recordingSince = useRef<number | null>(null);
 	const messages = useRef<Array<object>>([]);
@@ -52,9 +53,7 @@ export default function Home() {
 			// TODO: Play audio
 
 			setInput(transcription);
-
-			toast.info(`${Date.now() - submittedAt}ms`);
-
+			setLatency(Date.now() - submittedAt);
 			toast(text, {
 				duration: Math.max(response.text.length * 50, 5000),
 			});
@@ -181,43 +180,54 @@ export default function Home() {
 	}, [handleButtonDown, handleButtonUp]);
 
 	return (
-		<form
-			className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
-			onSubmit={handleFormSubmit}
-		>
-			<button
-				className={clsx("p-3 box-border group", {
-					"text-red-500": isRecording,
-				})}
-				onTouchStart={handleButtonDown}
-				onTouchEnd={handleButtonUp}
-				onMouseDown={handleButtonDown}
-				onMouseUp={handleButtonUp}
-				type="button"
+		<>
+			<form
+				className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
+				onSubmit={handleFormSubmit}
 			>
-				<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
-					<MicrophoneIcon />
-				</div>
-			</button>
+				<button
+					className={clsx("p-3 box-border group", {
+						"text-red-500": isRecording,
+					})}
+					onTouchStart={handleButtonDown}
+					onTouchEnd={handleButtonUp}
+					onMouseDown={handleButtonDown}
+					onMouseUp={handleButtonUp}
+					type="button"
+				>
+					<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
+						<MicrophoneIcon />
+					</div>
+				</button>
 
-			<input
-				type="text"
-				className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-700 dark:placeholder:text-neutral-300"
-				required
-				disabled={isRecording || isPending}
-				placeholder="Ask me anything"
-				value={input}
-				onChange={(e) => setInput(e.target.value)}
-			/>
+				<input
+					type="text"
+					className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-700 dark:placeholder:text-neutral-300"
+					required
+					disabled={isRecording || isPending}
+					placeholder="Ask me anything"
+					value={input}
+					onChange={(e) => setInput(e.target.value)}
+				/>
 
-			<button
-				type="submit"
-				className="p-4 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white"
-				disabled={isPending}
+				<button
+					type="submit"
+					className="p-4 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white"
+					disabled={isPending}
+				>
+					{isPending ? <LoadingIcon /> : <EnterIcon />}
+				</button>
+			</form>
+
+			<p
+				className={clsx(
+					"text-sm text-neutral-700 dark:text-neutral-300 text-center pt-2 flex items-center gap-1",
+					{ invisible: !latency }
+				)}
 			>
-				{isPending ? <LoadingIcon /> : <EnterIcon />}
-			</button>
-		</form>
+				<ClockIcon /> {latency}ms
+			</p>
+		</>
 	);
 }
 
