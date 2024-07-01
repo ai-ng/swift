@@ -29,33 +29,9 @@ export default function RootLayout({
 					{children}
 				</main>
 
-				<footer className="lg:flex flex-row justify-between text-center text-sm dark:text-neutral-400 text-neutral-600 font-mono">
-					<p>
-						<A href="https://github.com/ai-ng">ai-ng</A> /{" "}
-						<A href="https://nickoates.com">nick oates</A>
-					</p>
-					<p>
-						Built with <A href="https://groq.com/">Groq</A> &{" "}
-						<A href="https://cartesia.ai/">Cartesia</A>
-					</p>
-					<p>
-						<A href="https://github.com/ai-ng/swift">source</A> /{" "}
-						<A href="">▲ deploy</A>
-					</p>
-				</footer>
-
 				<Toaster richColors theme="system" />
 				<Analytics />
 			</body>
 		</html>
-	);
-}
-
-function A(props: any) {
-	return (
-		<a
-			{...props}
-			className="text-neutral-800 dark:text-neutral-200 hover:underline font-medium"
-		/>
 	);
 }

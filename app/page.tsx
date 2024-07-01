@@ -138,21 +138,38 @@ export default function Home() {
 				</button>
 			</form>
 
-			<p
-				className={clsx(
-					"text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-pretty min-h-28",
-					{
-						invisible: !response,
-					}
-				)}
-			>
-				{response}
+			{response ? (
+				<p className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28">
+					{response}
+					<span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
+						{" "}
+						({latency}ms)
+					</span>
+				</p>
+			) : (
+				<div className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28">
+					<p>
+						A fast, open-source voice assistant powered by{" "}
+						<A href="https://groq.com">Groq</A>,{" "}
+						<A href="https://cartesia.ai">Cartesia</A>, and{" "}
+						<A href="https://vercel.com">Vercel</A>.{" "}
+						<A href="https://github.com/ai-ng/swift">Learn more</A>.
+					</p>
 
-				<span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
-					{" "}
-					({latency}ms)
-				</span>
-			</p>
+					<p className="[@media(hover:hover)]:hidden pt-4">
+						Tap and hold anywhere to speak.
+					</p>
+				</div>
+			)}
 		</>
+	);
+}
+
+function A(props: any) {
+	return (
+		<a
+			{...props}
+			className="text-neutral-500 dark:text-neutral-500 hover:underline font-medium"
+		/>
 	);
 }
