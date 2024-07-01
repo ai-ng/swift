@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 			transcript: response,
 			voice: {
 				mode: "embedding",
-				id: embedding,
+				embedding,
 			},
 			output_format: {
 				container: "raw",
@@ -74,6 +74,9 @@ export async function POST(request: Request) {
 			},
 		}),
 	});
+
+	if (!voice.ok)
+		return new Response("Voice synthesis failed", { status: 500 });
 
 	return new Response(voice.body, {
 		headers: {
