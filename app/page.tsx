@@ -1,17 +1,12 @@
 "use client";
 
 import clsx from "clsx";
-import React, {
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-	useTransition,
-} from "react";
+import React, { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/lib/icons";
 import { useRecorder } from "@/lib/useRecorder";
 import { playPCMStream } from "@/lib/playPCMStream";
+import { useHotkeys } from "@/lib/useHotkeys";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
@@ -34,6 +29,14 @@ export default function Home() {
 	const [latency, setLatency] = useState<number | null>(null);
 	const [response, setResponse] = useState<string | null>(null);
 	const messages = useRef<Array<object>>([]);
+	const inputRef = useRef<HTMLInputElement>(null);
+
+	useHotkeys({
+		enter: () => inputRef.current?.focus(),
+		escape: () => setInput(""),
+		blankDown: startRecording,
+		blankUp: stopRecording,
+	});
 
 	const submit = useCallback((data: string | Blob) => {
 		startTransition(async () => {
@@ -83,41 +86,11 @@ export default function Home() {
 		});
 	}, []);
 
-	const handleButtonDown = useCallback(
-		(e: KeyboardEvent | React.MouseEvent | React.TouchEvent) => {
-			if (e.target instanceof HTMLInputElement) return;
-			if (e instanceof KeyboardEvent && e.key !== " ") return;
-			if (e instanceof KeyboardEvent && e.repeat) return;
-			e.preventDefault();
-			startRecording();
-		},
-		[startRecording]
-	);
-
-	const handleButtonUp = useCallback(
-		(e: KeyboardEvent | React.MouseEvent | React.TouchEvent) => {
-			if (e.target instanceof HTMLInputElement) return;
-			if (e instanceof KeyboardEvent && e.key !== " ") return;
-			e.preventDefault();
-			stopRecording();
-		},
-		[stopRecording]
-	);
-
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		if (isRecording) return stopRecording();
 		submit(input);
 	}
-
-	useEffect(() => {
-		window.addEventListener("keydown", handleButtonDown);
-		window.addEventListener("keyup", handleButtonUp);
-		return () => {
-			window.removeEventListener("keydown", handleButtonDown);
-			window.removeEventListener("keyup", handleButtonUp);
-		};
-	}, [handleButtonDown, handleButtonUp]);
 
 	return (
 		<>
@@ -129,11 +102,9 @@ export default function Home() {
 			>
 				<button
 					className="p-3 box-border group"
-					onTouchStart={handleButtonDown}
-					onTouchEnd={handleButtonUp}
-					onMouseDown={handleButtonDown}
-					onMouseUp={handleButtonUp}
 					type="button"
+					onMouseDown={startRecording}
+					onMouseUp={stopRecording}
 				>
 					<div
 						className={clsx(
@@ -155,6 +126,7 @@ export default function Home() {
 					placeholder="Ask me anything"
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
+					ref={inputRef}
 				/>
 
 				<button
