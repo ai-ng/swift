@@ -24,6 +24,7 @@ export function useRecorder(options: Options = {}) {
 		const duration = Date.now() - recordingSince.current!;
 		options.onRecordingStop?.(blob, duration);
 		recordingSince.current = null;
+		chunks.current = [];
 	}, [options]);
 
 	const getRecorder = useCallback(() => {
