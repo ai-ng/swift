@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import clsx from "clsx";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -19,15 +20,39 @@ export default function RootLayout({
 		<html lang="en">
 			<body
 				className={clsx(
-					GeistSans.className,
-					"py-8 px-6 lg:p-10 dark:text-white bg-white dark:bg-black min-h-dvh flex flex-col items-center justify-center antialiased"
+					GeistSans.variable,
+					GeistMono.variable,
+					"py-8 px-6 lg:p-10 dark:text-white bg-white dark:bg-black min-h-dvh flex flex-col justify-between antialiased font-sans"
 				)}
 			>
-				{children}
+				<main className="flex flex-col items-center justify-center grow">
+					{children}
+				</main>
+
+				<footer className="lg:flex flex-row justify-between text-center text-sm dark:text-gray-400 text-gray-600 font-mono">
+					<p>
+						<A href="https://github.com/ai-ng">ai-ng</A> /{" "}
+						<A href="https://nickoates.com">nick oates</A>
+					</p>
+					<p>
+						Built with <A href="https://groq.com/">Groq</A> &{" "}
+						<A href="https://cartesia.ai/">Cartesia</A>
+					</p>
+					<p>
+						<A href="https://github.com/ai-ng/swift">source</A> /{" "}
+						<A href="">▲ deploy</A>
+					</p>
+				</footer>
 
 				<Toaster richColors theme="system" />
 				<Analytics />
 			</body>
 		</html>
+	);
+}
+
+function A(props: any) {
+	return (
+		<a {...props} className="text-black dark:text-white hover:underline" />
 	);
 }

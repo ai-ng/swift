@@ -11,6 +11,10 @@ const config: Config = {
 					300: "#D1D1D1",
 				},
 			},
+			fontFamily: {
+				sans: ["var(--font-geist-sans)"],
+				mono: ["var(--font-geist-mono)"],
+			},
 		},
 	},
 	future: {
