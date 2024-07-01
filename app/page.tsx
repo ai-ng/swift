@@ -64,10 +64,9 @@ export default function Home() {
 				return;
 			}
 
-			playPCMStream(response.body);
-
-			setInput(transcript);
 			setLatency(Date.now() - submittedAt);
+			playPCMStream(response.body);
+			setInput(transcript);
 			setResponse(text);
 
 			messages.current.push(
