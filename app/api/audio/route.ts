@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 		headers: {
 			"Cartesia-Version": "2024-06-30",
 			"Content-Type": "application/json",
-			"X-API-Key": process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
+			"X-API-Key": process.env.CARTESIA_API_KEY!,
 		},
 		body: JSON.stringify({
 			model_id: "sonic-english",
