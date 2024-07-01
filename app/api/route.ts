@@ -2,6 +2,7 @@ import Groq from "groq-sdk";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
+import { unstable_after as after } from "next/server";
 
 const groq = new Groq();
 
@@ -18,11 +19,20 @@ const schema = zfd.formData({
 });
 
 export async function POST(request: Request) {
+	console.time("transcribe " + request.headers.get("x-vercel-id") || "local");
+
 	const { data, success } = schema.safeParse(await request.formData());
 	if (!success) return new Response("Invalid request", { status: 400 });
 
 	const transcript = await getTranscript(data.input);
 	if (!transcript) return new Response("Invalid audio", { status: 400 });
+
+	console.timeEnd(
+		"transcribe " + request.headers.get("x-vercel-id") || "local"
+	);
+	console.time(
+		"text completion " + request.headers.get("x-vercel-id") || "local"
+	);
 
 	const completion = await groq.chat.completions.create({
 		model: "llama3-8b-8192",
@@ -50,6 +60,13 @@ export async function POST(request: Request) {
 	});
 
 	const response = completion.choices[0].message.content;
+	console.timeEnd(
+		"text completion " + request.headers.get("x-vercel-id") || "local"
+	);
+
+	console.time(
+		"cartesia request " + request.headers.get("x-vercel-id") || "local"
+	);
 
 	const voice = await fetch("https://api.cartesia.ai/tts/bytes", {
 		method: "POST",
@@ -73,8 +90,19 @@ export async function POST(request: Request) {
 		}),
 	});
 
+	console.timeEnd(
+		"cartesia request " + request.headers.get("x-vercel-id") || "local"
+	);
+
 	if (!voice.ok)
 		return new Response("Voice synthesis failed", { status: 500 });
+
+	console.time("stream " + request.headers.get("x-vercel-id") || "local");
+	after(() => {
+		console.timeEnd(
+			"stream " + request.headers.get("x-vercel-id") || "local"
+		);
+	});
 
 	return new Response(voice.body, {
 		headers: {
