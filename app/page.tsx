@@ -148,7 +148,10 @@ export default function Home() {
 			>
 				{response}
 
-				<span className="text-sm font-mono"> ({latency}ms)</span>
+				<span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
+					{" "}
+					({latency}ms)
+				</span>
 			</p>
 		</>
 	);
