@@ -10,14 +10,27 @@ import React, {
 } from "react";
 import { toast } from "sonner";
 import { ClockIcon, EnterIcon, LoadingIcon, MicrophoneIcon } from "@/app/icons";
+import { useRecorder } from "@/app/utils";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
-	const [isRecording, setIsRecording] = useState(false);
+	const { isRecording, startRecording, stopRecording } = useRecorder({
+		onUnsupportedMimeType() {
+			toast.error("Your browser does not support audio recording.");
+		},
+		onMicrophoneDenied() {
+			toast.error("Access to microphone was denied.");
+		},
+		onRecordingStop(blob, duration) {
+			if (duration < 500) {
+				return toast.info("Hold the button or spacebar to record.");
+			}
+
+			submit(blob);
+		},
+	});
 	const [input, setInput] = useState("");
 	const [latency, setLatency] = useState<number | null>(null);
-	const recorder = useRef<MediaRecorder | null>(null);
-	const recordingSince = useRef<number | null>(null);
 	const messages = useRef<Array<object>>([]);
 
 	const submit = useCallback((data: string | Blob) => {
@@ -69,78 +82,6 @@ export default function Home() {
 			);
 		});
 	}, []);
-
-	const getRecorder = useCallback(() => {
-		navigator.mediaDevices
-			.getUserMedia({ audio: true })
-			.then((stream) => {
-				const mimeType = getSupportedMimeType();
-				if (!mimeType) {
-					return toast.error(
-						"Your browser does not support audio recording."
-					);
-				}
-
-				recorder.current = new MediaRecorder(stream, {
-					mimeType,
-				});
-			})
-			.catch(() => {
-				return toast.error("Access to microphone was denied.");
-			});
-	}, []);
-
-	useEffect(() => {
-		getRecorder();
-	}, [getRecorder]);
-
-	const startRecording = useCallback(() => {
-		if (!recorder.current) getRecorder();
-		if (!recorder.current) return;
-
-		recorder.current.start();
-		setIsRecording(true);
-		recordingSince.current = Date.now();
-	}, [getRecorder]);
-
-	const stopRecording = useCallback(() => {
-		if (!recorder.current) return;
-		setIsRecording(false);
-		if (
-			!recordingSince.current ||
-			Date.now() - recordingSince.current < 500
-		) {
-			toast.info(
-				"Hold the button or spacebar for at least 1 second to record."
-			);
-			return;
-		}
-		const chunks: Array<Blob> = [];
-
-		function dataAvailable(e: BlobEvent) {
-			chunks.push(e.data);
-		}
-
-		async function stop() {
-			const blob = new Blob(chunks, {
-				type: "audio/webm",
-			});
-
-			submit(blob);
-
-			recorder.current?.removeEventListener(
-				"dataavailable",
-				dataAvailable
-			);
-			recorder.current?.removeEventListener("stop", stop);
-		}
-
-		recorder.current.addEventListener("dataavailable", dataAvailable);
-		recorder.current.addEventListener("stop", stop);
-
-		recorder.current.stop();
-		recordingSince.current = null;
-	}, [submit]);
 
 	const handleButtonDown = useCallback(
 		(e: KeyboardEvent | React.MouseEvent | React.TouchEvent) => {
