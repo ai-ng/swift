@@ -68,8 +68,6 @@ export function useHotkeys(options: HotkeyOptions) {
 			keyup: handleButtonUp,
 			touchstart: handleButtonDown,
 			touchend: handleButtonUp,
-			mousedown: handleButtonDown,
-			mouseup: handleButtonUp,
 		};
 
 		for (const [event, listener] of Object.entries(listeners)) {
