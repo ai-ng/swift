@@ -9,7 +9,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
-		"@cartesia/cartesia-js": "1.0.0",
+		"@cartesia/cartesia-js": "^1.0.0",
 		"@vercel/analytics": "^1.2.2",
 		"clsx": "^2.1.1",
 		"geist": "^1.3.0",

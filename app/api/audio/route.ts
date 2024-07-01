@@ -23,10 +23,10 @@ export async function POST(request: Request) {
 	const { data, success } = schema.safeParse(await request.formData());
 	if (!success) return new Response("Invalid request", { status: 400 });
 
-	const text = await getText(data.input);
-	if (!text) return new Response("Invalid audio", { status: 400 });
+	const transcript = await getTranscript(data.input);
+	if (!transcript) return new Response("Invalid audio", { status: 400 });
 
-	const groqResponse = await groq.chat.completions.create({
+	const completion = await groq.chat.completions.create({
 		model: "llama3-8b-8192",
 		messages: [
 			{
@@ -46,12 +46,12 @@ export async function POST(request: Request) {
 			...data.message,
 			{
 				role: "user",
-				content: text,
+				content: transcript,
 			},
 		],
 	});
 
-	const response = groqResponse.choices[0].message.content;
+	const response = completion.choices[0].message.content;
 
 	const voice = await fetch("https://api.cartesia.ai/tts/bytes", {
 		method: "POST",
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
 	return new Response(voice.body, {
 		headers: {
-			"X-Transcription": text,
+			"X-Transcript": transcript,
 			"X-Response": response,
 		},
 	});
@@ -101,7 +101,7 @@ function time() {
 	});
 }
 
-async function getText(input: string | File) {
+async function getTranscript(input: string | File) {
 	if (typeof input === "string") return input;
 
 	try {

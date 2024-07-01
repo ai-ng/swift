@@ -41,18 +41,18 @@ export default function Home() {
 				body: formData,
 			});
 
-			const transcription = response.headers.get("X-Transcription");
+			const transcript = response.headers.get("X-Transcript");
 			const text = response.headers.get("X-Response");
-			if (!transcription || !text) return;
+			if (!transcript || !text) return;
 
-			if (!response.ok || !transcription || !text || !response.body) {
+			if (!response.ok || !transcript || !text || !response.body) {
 				toast.error("An error occurred."); // TODO: Show error message
 				return;
 			}
 
 			// TODO: Play audio
 
-			setInput(transcription);
+			setInput(transcript);
 			setLatency(Date.now() - submittedAt);
 			toast(text, {
 				duration: Math.max(response.text.length * 50, 5000),
@@ -61,7 +61,7 @@ export default function Home() {
 			messages.current.push(
 				{
 					role: "user",
-					content: transcription,
+					content: transcript,
 				},
 				{
 					role: "assistant",
