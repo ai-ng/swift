@@ -20,7 +20,7 @@ export default function RootLayout({
 			<body
 				className={clsx(
 					GeistSans.className,
-					"py-8 px-6 lg:p-10 dark:text-white bg-white dark:bg-black min-h-dvh flex flex-col items-center justify-center"
+					"py-8 px-6 lg:p-10 dark:text-white bg-white dark:bg-black min-h-dvh flex flex-col items-center justify-center antialiased"
 				)}
 			>
 				{children}

@@ -31,6 +31,7 @@ export default function Home() {
 	});
 	const [input, setInput] = useState("");
 	const [latency, setLatency] = useState<number | null>(null);
+	const [response, setResponse] = useState<string | null>(null);
 	const messages = useRef<Array<object>>([]);
 
 	const submit = useCallback((data: string | Blob) => {
@@ -66,9 +67,7 @@ export default function Home() {
 
 			setInput(transcript);
 			setLatency(Date.now() - submittedAt);
-			toast(text, {
-				duration: Math.max(response.text.length * 50, 5000),
-			});
+			setResponse(text);
 
 			messages.current.push(
 				{
@@ -121,21 +120,28 @@ export default function Home() {
 
 	return (
 		<>
+			<div className="pb-4 min-h-28" />
+
 			<form
 				className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
 				onSubmit={handleFormSubmit}
 			>
 				<button
-					className={clsx("p-3 box-border group", {
-						"text-red-500": isRecording,
-					})}
+					className="p-3 box-border group"
 					onTouchStart={handleButtonDown}
 					onTouchEnd={handleButtonUp}
 					onMouseDown={handleButtonDown}
 					onMouseUp={handleButtonUp}
 					type="button"
 				>
-					<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1">
+					<div
+						className={clsx(
+							"rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1",
+							{
+								"text-red-500": isRecording,
+							}
+						)}
+					>
 						<MicrophoneIcon />
 					</div>
 				</button>
@@ -161,11 +167,15 @@ export default function Home() {
 
 			<p
 				className={clsx(
-					"text-sm text-neutral-700 dark:text-neutral-300 text-center pt-2 flex items-center gap-1",
-					{ invisible: !latency }
+					"text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-pretty min-h-28",
+					{
+						invisible: !response,
+					}
 				)}
 			>
-				<ClockIcon /> {latency}ms
+				{response}
+
+				<span className="text-sm font-mono"> ({latency}ms)</span>
 			</p>
 		</>
 	);
