@@ -9,8 +9,9 @@ import React, {
 	useTransition,
 } from "react";
 import { toast } from "sonner";
-import { ClockIcon, EnterIcon, LoadingIcon, MicrophoneIcon } from "@/app/icons";
-import { useRecorder } from "@/app/utils";
+import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/lib/icons";
+import { useRecorder } from "@/lib/useRecorder";
+import { playPCMStream } from "@/lib/playPCMStream";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
@@ -63,7 +64,7 @@ export default function Home() {
 				return;
 			}
 
-			// TODO: Play audio
+			playPCMStream(response.body);
 
 			setInput(transcript);
 			setLatency(Date.now() - submittedAt);
@@ -179,9 +180,4 @@ export default function Home() {
 			</p>
 		</>
 	);
-}
-
-const types = ["audio/webm", "video/mp4", "audio/mpeg", "audio/wav"];
-function getSupportedMimeType() {
-	return types.find((type) => MediaRecorder.isTypeSupported(type));
 }
