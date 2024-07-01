@@ -43,7 +43,6 @@ export default function Home() {
 
 			const transcript = response.headers.get("X-Transcript");
 			const text = response.headers.get("X-Response");
-			if (!transcript || !text) return;
 
 			if (!response.ok || !transcript || !text || !response.body) {
 				toast.error("An error occurred."); // TODO: Show error message
