@@ -29,7 +29,7 @@ export default function RootLayout({
 					{children}
 				</main>
 
-				<footer className="lg:flex flex-row justify-between text-center text-sm dark:text-gray-400 text-gray-600 font-mono">
+				<footer className="lg:flex flex-row justify-between text-center text-sm dark:text-neutral-400 text-neutral-600 font-mono">
 					<p>
 						<A href="https://github.com/ai-ng">ai-ng</A> /{" "}
 						<A href="https://nickoates.com">nick oates</A>
@@ -53,6 +53,9 @@ export default function RootLayout({
 
 function A(props: any) {
 	return (
-		<a {...props} className="text-black dark:text-white hover:underline" />
+		<a
+			{...props}
+			className="text-neutral-800 dark:text-neutral-200 hover:underline font-medium"
+		/>
 	);
 }
