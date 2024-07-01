@@ -7,19 +7,22 @@ import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/lib/icons";
 import { useRecorder } from "@/lib/useRecorder";
 import { playPCMStream } from "@/lib/playPCMStream";
 import { useHotkeys } from "@/lib/useHotkeys";
+import { track } from "@vercel/analytics";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
 	const { isRecording, startRecording, stopRecording, volume } = useRecorder({
 		onUnsupportedMimeType() {
 			toast.error("Your browser does not support audio recording.");
+			track("Unsupported MIME type");
 		},
 		onMicrophoneDenied() {
 			toast.error("Access to microphone was denied.");
 		},
 		onRecordingStop(blob, duration) {
 			if (duration < 500) {
-				return toast.info("Hold the button or spacebar to record.");
+				toast.info("Hold the button or spacebar to record.");
+				return track("Recording too short");
 			}
 
 			submit(blob);
@@ -44,8 +47,10 @@ export default function Home() {
 
 			if (typeof data === "string") {
 				formData.append("input", data);
+				track("Text input");
 			} else {
 				formData.append("input", data, "audio.webm");
+				track("Speech input");
 			}
 
 			for (const message of messages.current) {
