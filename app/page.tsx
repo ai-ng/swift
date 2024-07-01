@@ -60,7 +60,8 @@ export default function Home() {
 			const text = response.headers.get("X-Response");
 
 			if (!response.ok || !transcript || !text || !response.body) {
-				toast.error("An error occurred."); // TODO: Show error message
+				const error = (await response.text()) || "An error occurred.";
+				toast.error(error);
 				return;
 			}
 
