@@ -25,7 +25,7 @@ export default function RootLayout({
 					"py-8 px-6 lg:p-10 dark:text-white bg-white dark:bg-black min-h-dvh flex flex-col justify-between antialiased font-sans"
 				)}
 			>
-				<main className="flex flex-col items-center justify-center grow">
+				<main className="flex flex-col items-center justify-center grow select-none">
 					{children}
 				</main>
 
