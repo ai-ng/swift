@@ -167,12 +167,12 @@ export default function Home() {
 				</div>
 			)}
 
-			{isRecording && (
-				<div
-					className="absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition-opacity ease-in-out"
-					style={{ opacity: Math.max(volume * 150, 0.4) }}
-				/>
-			)}
+			<div
+				className="absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition-opacity ease-in-out"
+				style={{
+					opacity: isRecording ? Math.max(volume * 150, 0.4) : 0,
+				}}
+			/>
 		</>
 	);
 }
