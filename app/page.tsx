@@ -10,7 +10,7 @@ import { useHotkeys } from "@/lib/useHotkeys";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
-	const { isRecording, startRecording, stopRecording } = useRecorder({
+	const { isRecording, startRecording, stopRecording, volume } = useRecorder({
 		onUnsupportedMimeType() {
 			toast.error("Your browser does not support audio recording.");
 		},
@@ -97,7 +97,7 @@ export default function Home() {
 			<div className="pb-4 min-h-28" />
 
 			<form
-				className="rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
+				className="rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
 				onSubmit={handleFormSubmit}
 			>
 				<button
@@ -160,6 +160,13 @@ export default function Home() {
 						Tap and hold anywhere to speak.
 					</p>
 				</div>
+			)}
+
+			{isRecording && (
+				<div
+					className="absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition-opacity ease-in-out"
+					style={{ opacity: Math.max(volume * 150, 0.4) }}
+				/>
 			)}
 		</>
 	);

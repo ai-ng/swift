@@ -8,6 +8,7 @@ type Options = {
 
 export function useRecorder(options: Options = {}) {
 	const [isRecording, setIsRecording] = useState(false);
+	const [volume, setVolume] = useState(0);
 	const recorder = useRef<MediaRecorder | null>(null);
 	const recordingSince = useRef<number | null>(null);
 	const chunks = useRef<Array<Blob>>([]);
@@ -42,6 +43,23 @@ export function useRecorder(options: Options = {}) {
 					onDataAvailable
 				);
 				recorder.current.addEventListener("stop", onStop);
+
+				const context = new AudioContext();
+				const audioSource = context.createMediaStreamSource(stream);
+				const analyser = context.createAnalyser();
+				audioSource.connect(analyser);
+				const pcmData = new Float32Array(analyser.fftSize);
+				function onFrame() {
+					analyser.getFloatTimeDomainData(pcmData);
+					let sumSquares = 0.0;
+					for (const amplitude of pcmData) {
+						sumSquares += amplitude * amplitude;
+					}
+					const volume = Math.sqrt(sumSquares / pcmData.length);
+					setVolume(volume);
+					window.requestAnimationFrame(onFrame);
+				}
+				window.requestAnimationFrame(onFrame);
 			})
 			.catch(() => options.onMicrophoneDenied?.());
 	}, [options, onDataAvailable, onStop]);
@@ -66,6 +84,7 @@ export function useRecorder(options: Options = {}) {
 
 	return {
 		isRecording,
+		volume,
 		startRecording,
 		stopRecording,
 	};
