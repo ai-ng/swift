@@ -3,8 +3,10 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import { unstable_after as after } from "next/server";
+import OpenAI from "openai";
 
 const groq = new Groq();
+const openai = new OpenAI();
 
 const schema = zfd.formData({
 	input: z.union([zfd.text(), zfd.file()]),
@@ -136,10 +138,18 @@ async function getTranscript(input: string | File) {
 	if (typeof input === "string") return input;
 
 	try {
-		const { text } = await groq.audio.transcriptions.create({
-			file: input,
-			model: "whisper-large-v3",
-		});
+		// Groq is faster by ~200ms, but OpenAI is more consistent
+		const { text } = await Promise.any([
+			groq.audio.transcriptions.create({
+				file: input,
+				model: "whisper-large-v3",
+			}),
+			openai.audio.transcriptions.create({
+				file: input,
+				model: "whisper-1",
+			}),
+		]);
+
 		return text.trim() || null;
 	} catch {
 		return null; // Empty audio file
