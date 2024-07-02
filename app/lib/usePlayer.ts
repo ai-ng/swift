@@ -5,14 +5,8 @@ export function usePlayer() {
 	const audioContext = useRef<AudioContext | null>(null);
 	const source = useRef<AudioBufferSourceNode | null>(null);
 
-	useEffect(() => {
-		audioContext.current = new AudioContext({ sampleRate: 24000 });
-	}, []);
-
 	async function play(stream: ReadableStream) {
-		if (audioContext.current === null) {
-			audioContext.current = new AudioContext({ sampleRate: 24000 });
-		}
+		audioContext.current = new AudioContext({ sampleRate: 24000 });
 
 		let nextStartTime = audioContext.current.currentTime;
 		const reader = stream.getReader();
