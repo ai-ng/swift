@@ -125,7 +125,7 @@ export default function Home() {
 
 				<input
 					type="text"
-					className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-700 dark:placeholder:text-neutral-300"
+					className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
 					required
 					disabled={isRecording || isPending}
 					placeholder="Ask me anything"
