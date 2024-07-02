@@ -94,8 +94,10 @@ export async function POST(request: Request) {
 		"cartesia request " + request.headers.get("x-vercel-id") || "local"
 	);
 
-	if (!voice.ok)
+	if (!voice.ok) {
+		console.error(await voice.text());
 		return new Response("Voice synthesis failed", { status: 500 });
+	}
 
 	console.time("stream " + request.headers.get("x-vercel-id") || "local");
 	after(() => {
