@@ -137,6 +137,8 @@ export default function Home() {
 						onMouseUp={stopRecording}
 						onKeyDown={(e) => !e.repeat && startRecording()}
 						onKeyUp={stopRecording}
+						onTouchStart={startRecording}
+						onTouchEnd={stopRecording}
 					>
 						<div
 							className={clsx(
