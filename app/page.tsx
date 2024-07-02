@@ -4,30 +4,22 @@ import clsx from "clsx";
 import React, { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { EnterIcon, LoadingIcon, MicrophoneIcon, StopIcon } from "@/lib/icons";
-import { useRecorder } from "@/lib/useRecorder";
 import { usePlayer } from "@/lib/usePlayer";
 import { useHotkeys } from "@/lib/useHotkeys";
 import { track } from "@vercel/analytics";
+import { useMicVAD, utils } from "@ricky0123/vad-react";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
-	const { isRecording, startRecording, stopRecording, volume } = useRecorder({
-		onUnsupportedMimeType() {
-			toast.error("Your browser does not support audio recording.");
-			track("Unsupported MIME type");
-		},
-		onMicrophoneDenied() {
-			toast.error("Access to microphone was denied.");
-		},
-		onRecordingStop(blob, duration) {
-			if (duration < 500) {
-				toast.info("Hold the button or spacebar to record.");
-				return track("Recording too short");
-			}
-
-			submit(blob);
-		},
-	});
+	// const { isRecording, startRecording, stopRecording, volume } = useRecorder({
+	// 	onUnsupportedMimeType() {
+	// 		toast.error("Your browser does not support audio recording.");
+	// 		track("Unsupported MIME type");
+	// 	},
+	// 	onMicrophoneDenied() {
+	// 		toast.error("Access to microphone was denied.");
+	// 	},
+	// });
 	const [input, setInput] = useState("");
 	const [latency, setLatency] = useState<number | null>(null);
 	const [response, setResponse] = useState<string | null>(null);
@@ -35,14 +27,21 @@ export default function Home() {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const player = usePlayer();
 
+	const { userSpeaking } = useMicVAD({
+		startOnLoad: true,
+		onSpeechEnd: (audio) => {
+			player.stop();
+			const wav = utils.encodeWAV(audio);
+			const blob = new Blob([wav], { type: "audio/wav" });
+			submit(blob);
+		},
+		workletURL: "/_next/static/chunks/vad.worklet.bundle.min.js",
+		modelURL: "/_next/static/chunks/silero_vad.onnx",
+	});
+
 	useHotkeys({
 		enter: () => inputRef.current?.focus(),
 		escape: () => setInput(""),
-		blankDown: () => {
-			player.stop();
-			startRecording();
-		},
-		blankUp: stopRecording,
 	});
 
 	const submit = useCallback(
@@ -54,7 +53,7 @@ export default function Home() {
 					formData.append("input", data);
 					track("Text input");
 				} else {
-					formData.append("input", data, "audio.webm");
+					formData.append("input", data, "audio.wav");
 					track("Speech input");
 				}
 
@@ -105,7 +104,7 @@ export default function Home() {
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (isRecording) return stopRecording();
+		// if (isRecording) return stopRecording();
 		submit(input);
 	}
 
@@ -117,47 +116,11 @@ export default function Home() {
 				className="rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
 				onSubmit={handleFormSubmit}
 			>
-				{player.isPlaying ? (
-					<button
-						className="p-3 box-border group"
-						type="button"
-						onClick={player.stop}
-						aria-label="Stop responding"
-					>
-						<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition-transform ease-in-out p-1 text-red-500">
-							<StopIcon />
-						</div>
-					</button>
-				) : (
-					<button
-						className="p-3 box-border group"
-						type="button"
-						aria-label="Hold to record"
-						onMouseDown={startRecording}
-						onMouseUp={stopRecording}
-						onKeyDown={(e) => !e.repeat && startRecording()}
-						onKeyUp={stopRecording}
-						onTouchStart={startRecording}
-						onTouchEnd={stopRecording}
-					>
-						<div
-							className={clsx(
-								"rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1",
-								{
-									"text-red-500": isRecording,
-								}
-							)}
-						>
-							<MicrophoneIcon />
-						</div>
-					</button>
-				)}
-
 				<input
 					type="text"
-					className="bg-transparent focus:outline-none py-3 w-full placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
+					className="bg-transparent focus:outline-none p-4 w-full placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
 					required
-					disabled={isRecording || isPending}
+					// disabled={isRecording || isPending}
 					placeholder="Ask me anything"
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
@@ -205,10 +168,13 @@ export default function Home() {
 			)}
 
 			<div
-				className="absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition-opacity ease-in-out"
-				style={{
-					opacity: isRecording ? Math.max(volume * 150, 0.4) : 0,
-				}}
+				className={clsx(
+					"absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition ease-in-out",
+					{
+						"opacity-30": !userSpeaking,
+						"opacity-100 scale-110": userSpeaking,
+					}
+				)}
 			/>
 		</>
 	);
