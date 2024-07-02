@@ -67,12 +67,13 @@ export function useRecorder(options: Options = {}) {
 	}, [options, onDataAvailable, onStop]);
 
 	const startRecording = useCallback(() => {
+		if (isRecording) return;
 		if (!recorder.current) getRecorder();
 		if (!recorder.current) return;
 		recorder.current.start();
 		setIsRecording(true);
 		recordingSince.current = Date.now();
-	}, [getRecorder]);
+	}, [getRecorder, isRecording]);
 
 	const stopRecording = useCallback(() => {
 		if (!recorder.current) return;
