@@ -158,7 +158,13 @@ export default function Home() {
 						<A href="https://groq.com">Groq</A>,{" "}
 						<A href="https://cartesia.ai">Cartesia</A>, and{" "}
 						<A href="https://vercel.com">Vercel</A>.{" "}
-						<A href="https://github.com/ai-ng/swift">Learn more</A>.
+						<A
+							href="https://github.com/ai-ng/swift"
+							target="_blank"
+						>
+							Learn more
+						</A>
+						.
 					</p>
 
 					<p className="[@media(hover:hover)]:hidden pt-4">
