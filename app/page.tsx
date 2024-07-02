@@ -110,6 +110,8 @@ export default function Home() {
 					type="button"
 					onMouseDown={startRecording}
 					onMouseUp={stopRecording}
+					onKeyDown={(e) => !e.repeat && startRecording()}
+					onKeyUp={stopRecording}
 				>
 					<div
 						className={clsx(
