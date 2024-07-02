@@ -69,8 +69,12 @@ export default function Home() {
 					body: formData,
 				});
 
-				const transcript = response.headers.get("X-Transcript");
-				const text = response.headers.get("X-Response");
+				const transcript = decodeURIComponent(
+					response.headers.get("X-Transcript") || ""
+				);
+				const text = decodeURIComponent(
+					response.headers.get("X-Response") || ""
+				);
 
 				if (!response.ok || !transcript || !text || !response.body) {
 					const error =
