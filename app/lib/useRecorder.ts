@@ -12,14 +12,16 @@ export function useRecorder(options: Options = {}) {
 	const recorder = useRef<MediaRecorder | null>(null);
 	const recordingSince = useRef<number | null>(null);
 	const chunks = useRef<Array<Blob>>([]);
+	const format = useRef<string | null>(null);
 
 	const onDataAvailable = useCallback((e: BlobEvent) => {
 		chunks.current.push(e.data);
 	}, []);
 
 	const onStop = useCallback(() => {
+		if (!format.current) throw new Error("Format is not set");
 		const blob = new Blob(chunks.current, {
-			type: "audio/webm",
+			type: format.current,
 		});
 
 		const duration = Date.now() - recordingSince.current!;
@@ -32,11 +34,11 @@ export function useRecorder(options: Options = {}) {
 		navigator.mediaDevices
 			.getUserMedia({ audio: true })
 			.then((stream) => {
-				const mimeType = getSupportedMimeType();
-				if (!mimeType) return options.onUnsupportedMimeType?.();
+				format.current = getSupportedMimeType();
+				if (!format.current) return options.onUnsupportedMimeType?.();
 
 				recorder.current = new MediaRecorder(stream, {
-					mimeType,
+					mimeType: format.current,
 				});
 				recorder.current.addEventListener(
 					"dataavailable",
@@ -92,5 +94,5 @@ export function useRecorder(options: Options = {}) {
 
 const types = ["audio/webm", "video/mp4", "audio/mpeg", "audio/wav"];
 function getSupportedMimeType() {
-	return types.find((type) => MediaRecorder.isTypeSupported(type));
+	return types.find((type) => MediaRecorder.isTypeSupported(type)) || null;
 }
