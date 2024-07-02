@@ -3,9 +3,9 @@
 import clsx from "clsx";
 import React, { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { EnterIcon, LoadingIcon, MicrophoneIcon } from "@/lib/icons";
+import { EnterIcon, LoadingIcon, MicrophoneIcon, StopIcon } from "@/lib/icons";
 import { useRecorder } from "@/lib/useRecorder";
-import { playPCMStream } from "@/lib/playPCMStream";
+import { usePlayer } from "@/lib/usePlayer";
 import { useHotkeys } from "@/lib/useHotkeys";
 import { track } from "@vercel/analytics";
 
@@ -33,63 +33,71 @@ export default function Home() {
 	const [response, setResponse] = useState<string | null>(null);
 	const messages = useRef<Array<object>>([]);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const player = usePlayer();
 
 	useHotkeys({
 		enter: () => inputRef.current?.focus(),
 		escape: () => setInput(""),
-		blankDown: startRecording,
+		blankDown: () => {
+			player.stop();
+			startRecording();
+		},
 		blankUp: stopRecording,
 	});
 
-	const submit = useCallback((data: string | Blob) => {
-		startTransition(async () => {
-			const formData = new FormData();
+	const submit = useCallback(
+		(data: string | Blob) => {
+			startTransition(async () => {
+				const formData = new FormData();
 
-			if (typeof data === "string") {
-				formData.append("input", data);
-				track("Text input");
-			} else {
-				formData.append("input", data, "audio.webm");
-				track("Speech input");
-			}
-
-			for (const message of messages.current) {
-				formData.append("message", JSON.stringify(message));
-			}
-
-			const submittedAt = Date.now();
-
-			const response = await fetch("/api", {
-				method: "POST",
-				body: formData,
-			});
-
-			const transcript = response.headers.get("X-Transcript");
-			const text = response.headers.get("X-Response");
-
-			if (!response.ok || !transcript || !text || !response.body) {
-				const error = (await response.text()) || "An error occurred.";
-				toast.error(error);
-				return;
-			}
-
-			setLatency(Date.now() - submittedAt);
-			playPCMStream(response.body);
-			setInput(transcript);
-			setResponse(text);
-
-			messages.current.push(
-				{
-					role: "user",
-					content: transcript,
-				},
-				{
-					role: "assistant",
-					content: text,
+				if (typeof data === "string") {
+					formData.append("input", data);
+					track("Text input");
+				} else {
+					formData.append("input", data, "audio.webm");
+					track("Speech input");
 				}
-			);
-		});
-	}, []);
+
+				for (const message of messages.current) {
+					formData.append("message", JSON.stringify(message));
+				}
+
+				const submittedAt = Date.now();
+
+				const response = await fetch("/api", {
+					method: "POST",
+					body: formData,
+				});
+
+				const transcript = response.headers.get("X-Transcript");
+				const text = response.headers.get("X-Response");
+
+				if (!response.ok || !transcript || !text || !response.body) {
+					const error =
+						(await response.text()) || "An error occurred.";
+					toast.error(error);
+					return;
+				}
+
+				setLatency(Date.now() - submittedAt);
+				player.play(response.body);
+				setInput(transcript);
+				setResponse(text);
+
+				messages.current.push(
+					{
+						role: "user",
+						content: transcript,
+					},
+					{
+						role: "assistant",
+						content: text,
+					}
+				);
+			});
+		},
+		[player]
+	);
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -105,25 +113,39 @@ export default function Home() {
 				className="rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
 				onSubmit={handleFormSubmit}
 			>
-				<button
-					className="p-3 box-border group"
-					type="button"
-					onMouseDown={startRecording}
-					onMouseUp={stopRecording}
-					onKeyDown={(e) => !e.repeat && startRecording()}
-					onKeyUp={stopRecording}
-				>
-					<div
-						className={clsx(
-							"rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1",
-							{
-								"text-red-500": isRecording,
-							}
-						)}
+				{player.isPlaying ? (
+					<button
+						className="p-3 box-border group"
+						type="button"
+						onClick={player.stop}
+						aria-label="Stop responding"
 					>
-						<MicrophoneIcon />
-					</div>
-				</button>
+						<div className="rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition-transform ease-in-out p-1 text-red-500">
+							<StopIcon />
+						</div>
+					</button>
+				) : (
+					<button
+						className="p-3 box-border group"
+						type="button"
+						aria-label="Hold to record"
+						onMouseDown={startRecording}
+						onMouseUp={stopRecording}
+						onKeyDown={(e) => !e.repeat && startRecording()}
+						onKeyUp={stopRecording}
+					>
+						<div
+							className={clsx(
+								"rounded-full bg-white dark:bg-black border border-neutral-300 dark:border-neutral-700 drop-shadow group-hover:scale-110 group-active:scale-90 transition ease-in-out p-1",
+								{
+									"text-red-500": isRecording,
+								}
+							)}
+						>
+							<MicrophoneIcon />
+						</div>
+					</button>
+				)}
 
 				<input
 					type="text"
@@ -140,6 +162,7 @@ export default function Home() {
 					type="submit"
 					className="p-4 text-neutral-700 hover:text-black dark:text-neutral-300 dark:hover:text-white"
 					disabled={isPending}
+					aria-label="Submit"
 				>
 					{isPending ? <LoadingIcon /> : <EnterIcon />}
 				</button>
