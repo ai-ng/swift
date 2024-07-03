@@ -1,25 +1,22 @@
 "use client";
 
 import clsx from "clsx";
-import React, {
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-	useTransition,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EnterIcon, LoadingIcon } from "@/lib/icons";
 import { usePlayer } from "@/lib/usePlayer";
 import { track } from "@vercel/analytics";
 import { useMicVAD, utils } from "@ricky0123/vad-react";
+import { useFormState } from "react-dom";
+
+type Message = {
+	role: "user" | "assistant";
+	content: string;
+	latency?: number;
+};
 
 export default function Home() {
-	const [isPending, startTransition] = useTransition();
 	const [input, setInput] = useState("");
-	const [latency, setLatency] = useState<number | null>(null);
-	const [response, setResponse] = useState<string | null>(null);
-	const messages = useRef<Array<object>>([]);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const player = usePlayer();
 
@@ -55,63 +52,61 @@ export default function Home() {
 		return () => window.removeEventListener("keydown", keyDown);
 	});
 
-	const submit = useCallback(
-		(data: string | Blob) => {
-			startTransition(async () => {
-				const formData = new FormData();
+	const [messages, submit, isPending] = useFormState<
+		Array<Message>,
+		string | Blob
+	>(async (prevMessages, data) => {
+		const formData = new FormData();
 
-				if (typeof data === "string") {
-					formData.append("input", data);
-					track("Text input");
-				} else {
-					formData.append("input", data, "audio.wav");
-					track("Speech input");
-				}
+		if (typeof data === "string") {
+			formData.append("input", data);
+			track("Text input");
+		} else {
+			formData.append("input", data, "audio.wav");
+			track("Speech input");
+		}
 
-				for (const message of messages.current) {
-					formData.append("message", JSON.stringify(message));
-				}
+		for (const message of prevMessages) {
+			formData.append("message", JSON.stringify(message));
+		}
 
-				const submittedAt = Date.now();
+		const submittedAt = Date.now();
 
-				const response = await fetch("/api", {
-					method: "POST",
-					body: formData,
-				});
+		const response = await fetch("/api", {
+			method: "POST",
+			body: formData,
+		});
 
-				const transcript = decodeURIComponent(
-					response.headers.get("X-Transcript") || ""
-				);
-				const text = decodeURIComponent(
-					response.headers.get("X-Response") || ""
-				);
+		const transcript = decodeURIComponent(
+			response.headers.get("X-Transcript") || ""
+		);
+		const text = decodeURIComponent(
+			response.headers.get("X-Response") || ""
+		);
 
-				if (!response.ok || !transcript || !text || !response.body) {
-					const error =
-						(await response.text()) || "An error occurred.";
-					toast.error(error);
-					return;
-				}
+		if (!response.ok || !transcript || !text || !response.body) {
+			const error = (await response.text()) || "An error occurred.";
+			toast.error(error);
+			return prevMessages;
+		}
 
-				setLatency(Date.now() - submittedAt);
-				player.play(response.body);
-				setInput(transcript);
-				setResponse(text);
+		const latency = Date.now() - submittedAt;
+		player.play(response.body);
+		setInput(transcript);
 
-				messages.current.push(
-					{
-						role: "user",
-						content: transcript,
-					},
-					{
-						role: "assistant",
-						content: text,
-					}
-				);
-			});
-		},
-		[player]
-	);
+		return [
+			...prevMessages,
+			{
+				role: "user",
+				content: transcript,
+			},
+			{
+				role: "assistant",
+				content: text,
+				latency,
+			},
+		];
+	}, []);
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -147,17 +142,17 @@ export default function Home() {
 			</form>
 
 			<div className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28 space-y-4">
-				{response && (
+				{messages.length > 0 && (
 					<p>
-						{response}
+						{messages.at(-1)?.content}
 						<span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
 							{" "}
-							({latency}ms)
+							({messages.at(-1)?.latency}ms)
 						</span>
 					</p>
 				)}
 
-				{!response && (
+				{messages.length === 0 && (
 					<>
 						<p>
 							A fast, open-source voice assistant powered by{" "}
