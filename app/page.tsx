@@ -1,11 +1,16 @@
 "use client";
 
 import clsx from "clsx";
-import React, { useCallback, useRef, useState, useTransition } from "react";
+import React, {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useTransition,
+} from "react";
 import { toast } from "sonner";
 import { EnterIcon, LoadingIcon } from "@/lib/icons";
 import { usePlayer } from "@/lib/usePlayer";
-import { useHotkeys } from "@/lib/useHotkeys";
 import { track } from "@vercel/analytics";
 import { useMicVAD, utils } from "@ricky0123/vad-react";
 
@@ -40,9 +45,14 @@ export default function Home() {
 		},
 	});
 
-	useHotkeys({
-		enter: () => inputRef.current?.focus(),
-		escape: () => setInput(""),
+	useEffect(() => {
+		function keyDown(e: KeyboardEvent) {
+			if (e.key === "Enter") return inputRef.current?.focus();
+			if (e.key === "Escape") return setInput("");
+		}
+
+		window.addEventListener("keydown", keyDown);
+		return () => window.removeEventListener("keydown", keyDown);
 	});
 
 	const submit = useCallback(
