@@ -30,6 +30,14 @@ export default function Home() {
 		modelURL: "/silero_vad.onnx",
 		positiveSpeechThreshold: 0.7,
 		minSpeechFrames: 5,
+		ortConfig(ort) {
+			ort.env.wasm.wasmPaths = {
+				"ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
+				"ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
+				"ort-wasm.wasm": "/ort-wasm.wasm",
+				"ort-wasm-threaded.wasm": "/ort-wasm-threaded.wasm",
+			};
+		},
 	});
 
 	useHotkeys({
