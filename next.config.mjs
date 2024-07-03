@@ -29,9 +29,9 @@ export default nextConfig;
 
 async function copyFiles() {
 	try {
-		await fs.access(".next/static/chunks/");
+		await fs.access("public/");
 	} catch {
-		await fs.mkdir(".next/static/chunks/", { recursive: true });
+		await fs.mkdir("public/", { recursive: true });
 	}
 
 	const wasmFiles = (
