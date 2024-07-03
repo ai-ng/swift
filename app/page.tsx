@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import React, { useCallback, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { EnterIcon, LoadingIcon, MicrophoneIcon, StopIcon } from "@/lib/icons";
+import { EnterIcon, LoadingIcon } from "@/lib/icons";
 import { usePlayer } from "@/lib/usePlayer";
 import { useHotkeys } from "@/lib/useHotkeys";
 import { track } from "@vercel/analytics";
@@ -11,15 +11,6 @@ import { useMicVAD, utils } from "@ricky0123/vad-react";
 
 export default function Home() {
 	const [isPending, startTransition] = useTransition();
-	// const { isRecording, startRecording, stopRecording, volume } = useRecorder({
-	// 	onUnsupportedMimeType() {
-	// 		toast.error("Your browser does not support audio recording.");
-	// 		track("Unsupported MIME type");
-	// 	},
-	// 	onMicrophoneDenied() {
-	// 		toast.error("Access to microphone was denied.");
-	// 	},
-	// });
 	const [input, setInput] = useState("");
 	const [latency, setLatency] = useState<number | null>(null);
 	const [response, setResponse] = useState<string | null>(null);
@@ -37,6 +28,8 @@ export default function Home() {
 		},
 		workletURL: "/_next/static/chunks/vad.worklet.bundle.min.js",
 		modelURL: "/_next/static/chunks/silero_vad.onnx",
+		positiveSpeechThreshold: 0.7,
+		minSpeechFrames: 5,
 	});
 
 	useHotkeys({
