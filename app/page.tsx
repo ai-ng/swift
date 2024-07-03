@@ -28,8 +28,8 @@ export default function Home() {
 		},
 		workletURL: "/vad.worklet.bundle.min.js",
 		modelURL: "/silero_vad.onnx",
-		positiveSpeechThreshold: 0.7,
-		minSpeechFrames: 5,
+		positiveSpeechThreshold: 0.6,
+		minSpeechFrames: 4,
 		ortConfig(ort) {
 			ort.env.wasm.wasmPaths = {
 				"ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
