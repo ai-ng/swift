@@ -18,7 +18,7 @@ export default function Home() {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const player = usePlayer();
 
-	const { userSpeaking } = useMicVAD({
+	const vad = useMicVAD({
 		startOnLoad: true,
 		onSpeechEnd: (audio) => {
 			player.stop();
@@ -26,8 +26,8 @@ export default function Home() {
 			const blob = new Blob([wav], { type: "audio/wav" });
 			submit(blob);
 		},
-		workletURL: "/_next/static/chunks/vad.worklet.bundle.min.js",
-		modelURL: "/_next/static/chunks/silero_vad.onnx",
+		workletURL: "/vad.worklet.bundle.min.js",
+		modelURL: "/silero_vad.onnx",
 		positiveSpeechThreshold: 0.7,
 		minSpeechFrames: 5,
 	});
@@ -97,7 +97,6 @@ export default function Home() {
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		// if (isRecording) return stopRecording();
 		submit(input);
 	}
 
@@ -113,7 +112,6 @@ export default function Home() {
 					type="text"
 					className="bg-transparent focus:outline-none p-4 w-full placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
 					required
-					// disabled={isRecording || isPending}
 					placeholder="Ask me anything"
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
@@ -130,42 +128,49 @@ export default function Home() {
 				</button>
 			</form>
 
-			{response ? (
-				<p className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28">
-					{response}
-					<span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
-						{" "}
-						({latency}ms)
-					</span>
-				</p>
-			) : (
-				<div className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28">
+			<div className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28 space-y-4">
+				{response && (
 					<p>
-						A fast, open-source voice assistant powered by{" "}
-						<A href="https://groq.com">Groq</A>,{" "}
-						<A href="https://cartesia.ai">Cartesia</A>, and{" "}
-						<A href="https://vercel.com">Vercel</A>.{" "}
-						<A
-							href="https://github.com/ai-ng/swift"
-							target="_blank"
-						>
-							Learn more
-						</A>
-						.
+						{response}
+						<span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
+							{" "}
+							({latency}ms)
+						</span>
 					</p>
+				)}
 
-					<p className="[@media(hover:hover)]:hidden pt-4">
-						Tap and hold anywhere to speak.
-					</p>
-				</div>
-			)}
+				{!response && (
+					<>
+						<p>
+							A fast, open-source voice assistant powered by{" "}
+							<A href="https://groq.com">Groq</A>,{" "}
+							<A href="https://cartesia.ai">Cartesia</A>, and{" "}
+							<A href="https://vercel.com">Vercel</A>.{" "}
+							<A
+								href="https://github.com/ai-ng/swift"
+								target="_blank"
+							>
+								Learn more
+							</A>
+							.
+						</p>
+
+						{vad.loading ? (
+							<p>Loading speech detection...</p>
+						) : (
+							<p>Start talking to chat.</p>
+						)}
+					</>
+				)}
+			</div>
 
 			<div
 				className={clsx(
 					"absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition ease-in-out",
 					{
-						"opacity-30": !userSpeaking,
-						"opacity-100 scale-110": userSpeaking,
+						"opacity-0": vad.loading,
+						"opacity-30": !vad.userSpeaking && !vad.loading,
+						"opacity-100 scale-110": vad.userSpeaking,
 					}
 				)}
 			/>

@@ -6,6 +6,23 @@ const nextConfig = {
 	experimental: {
 		after: true,
 	},
+	// async headers() {
+	// 	return [
+	// 		{
+	// 			source: "/(.*)",
+	// 			headers: [
+	// 				{
+	// 					key: "Cross-Origin-Opener-Policy",
+	// 					value: "same-origin",
+	// 				},
+	// 				{
+	// 					key: "Cross-Origin-Embedder-Policy",
+	// 					value: "require-corp",
+	// 				},
+	// 			],
+	// 		},
+	// 	];
+	// },
 };
 
 export default nextConfig;
@@ -24,16 +41,16 @@ async function copyFiles() {
 	await Promise.all([
 		fs.copyFile(
 			"node_modules/@ricky0123/vad-web/dist/vad.worklet.bundle.min.js",
-			".next/static/chunks/vad.worklet.bundle.min.js"
+			"public/vad.worklet.bundle.min.js"
 		),
 		fs.copyFile(
 			"node_modules/@ricky0123/vad-web/dist/silero_vad.onnx",
-			".next/static/chunks/silero_vad.onnx"
+			"public/silero_vad.onnx"
 		),
 		...wasmFiles.map((file) =>
 			fs.copyFile(
 				`node_modules/onnxruntime-web/dist/${file}`,
-				`.next/static/chunks/${file}`
+				`public/${file}`
 			)
 		),
 	]);
