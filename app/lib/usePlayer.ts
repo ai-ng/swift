@@ -6,6 +6,7 @@ export function usePlayer() {
 	const source = useRef<AudioBufferSourceNode | null>(null);
 
 	async function play(stream: ReadableStream) {
+		stop();
 		audioContext.current = new AudioContext({ sampleRate: 24000 });
 
 		let nextStartTime = audioContext.current.currentTime;
