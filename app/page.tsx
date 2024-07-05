@@ -85,8 +85,12 @@ export default function Home() {
 		);
 
 		if (!response.ok || !transcript || !text || !response.body) {
-			const error = (await response.text()) || "An error occurred.";
-			toast.error(error);
+			if (response.status === 429) {
+				toast.error("Too many requests. Please try again later.");
+			} else {
+				toast.error((await response.text()) || "An error occurred.");
+			}
+
 			return prevMessages;
 		}
 
