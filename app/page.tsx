@@ -1,13 +1,12 @@
 "use client";
 
 import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EnterIcon, LoadingIcon } from "@/lib/icons";
 import { usePlayer } from "@/lib/usePlayer";
 import { track } from "@vercel/analytics";
 import { useMicVAD, utils } from "@ricky0123/vad-react";
-import { useFormState } from "react-dom";
 
 type Message = {
 	role: "user" | "assistant";
@@ -52,7 +51,7 @@ export default function Home() {
 		return () => window.removeEventListener("keydown", keyDown);
 	});
 
-	const [messages, submit, isPending] = useFormState<
+	const [messages, submit, isPending] = useActionState<
 		Array<Message>,
 		string | Blob
 	>(async (prevMessages, data) => {
