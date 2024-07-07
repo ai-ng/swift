@@ -5,7 +5,7 @@ export function usePlayer() {
 	const audioContext = useRef<AudioContext | null>(null);
 	const source = useRef<AudioBufferSourceNode | null>(null);
 
-	async function play(stream: ReadableStream) {
+	async function play(stream: ReadableStream, callback: () => void) {
 		stop();
 		audioContext.current = new AudioContext({ sampleRate: 24000 });
 
@@ -42,7 +42,10 @@ export function usePlayer() {
 
 			result = await reader.read();
 			if (result.done) {
-				source.current.onended = stop;
+				source.current.onended = () => {
+					stop();
+					callback();
+				};
 			}
 		}
 	}

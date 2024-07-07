@@ -26,6 +26,9 @@ export default function Home() {
 			const wav = utils.encodeWAV(audio);
 			const blob = new Blob([wav], { type: "audio/wav" });
 			submit(blob);
+			const isFirefox = navigator.userAgent.includes("Firefox");
+			console.log("isFirefox", isFirefox);
+			if (isFirefox) vad.pause();
 		},
 		workletURL: "/vad.worklet.bundle.min.js",
 		modelURL: "/silero_vad.onnx",
@@ -102,7 +105,10 @@ export default function Home() {
 		}
 
 		const latency = Date.now() - submittedAt;
-		player.play(response.body);
+		player.play(response.body, () => {
+			const isFirefox = navigator.userAgent.includes("Firefox");
+			if (isFirefox) vad.start();
+		});
 		setInput(transcript);
 
 		return [
