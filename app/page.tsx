@@ -32,11 +32,19 @@ export default function Home() {
 		positiveSpeechThreshold: 0.6,
 		minSpeechFrames: 4,
 		ortConfig(ort) {
-			ort.env.wasm.wasmPaths = {
-				"ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
-				"ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
-				"ort-wasm.wasm": "/ort-wasm.wasm",
-				"ort-wasm-threaded.wasm": "/ort-wasm-threaded.wasm",
+			const isSafari = /^((?!chrome|android).)*safari/i.test(
+				navigator.userAgent
+			);
+
+			ort.env.wasm = {
+				wasmPaths: {
+					"ort-wasm-simd-threaded.wasm":
+						"/ort-wasm-simd-threaded.wasm",
+					"ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
+					"ort-wasm.wasm": "/ort-wasm.wasm",
+					"ort-wasm-threaded.wasm": "/ort-wasm-threaded.wasm",
+				},
+				numThreads: isSafari ? 1 : 4,
 			};
 		},
 	});
