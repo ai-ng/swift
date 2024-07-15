@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 export function usePlayer() {
 	const [isPlaying, setIsPlaying] = useState(false);
