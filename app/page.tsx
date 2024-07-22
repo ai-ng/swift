@@ -27,7 +27,6 @@ export default function Home() {
 			const blob = new Blob([wav], { type: "audio/wav" });
 			submit(blob);
 			const isFirefox = navigator.userAgent.includes("Firefox");
-			console.log("isFirefox", isFirefox);
 			if (isFirefox) vad.pause();
 		},
 		workletURL: "/vad.worklet.bundle.min.js",
