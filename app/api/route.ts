@@ -7,7 +7,7 @@ import { unstable_after as after } from "next/server";
 const groq = new Groq();
 
 const schema = zfd.formData({
-	input: z.union([zfd.text(), zfd.file()]),
+	input: z.union([zfd.text(), z.any()]),
 	message: zfd.repeatableOfType(
 		zfd.json(
 			z.object({
