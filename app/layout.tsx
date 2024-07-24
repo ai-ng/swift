@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/react";
 export const metadata: Metadata = {
 	title: "Swift",
 	description:
-		"A fast, open-source voice assistant powered by Groq, Cartesia, and Vercel.",
+		"PhonePal - real-time translation of voice calls - powered by Groq, Cartesia, and Vercel.",
 };
 
 export default function RootLayout({

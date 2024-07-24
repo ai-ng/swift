@@ -9,6 +9,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
+		"@cartesia/cartesia-js": "^1.0.1",
 		"@ricky0123/vad-react": "^0.0.24",
 		"@ricky0123/vad-web": "^0.0.18",
 		"@vercel/analytics": "^1.2.2",
@@ -20,6 +21,9 @@
 		"react": "19.0.0-rc-100dfd7dab-20240701",
 		"react-dom": "19.0.0-rc-100dfd7dab-20240701",
 		"sonner": "^1.4.41",
+		"uuid": "^10.0.0",
+		"ws": "^8.18.0",
+		"wscat": "^5.2.1",
 		"zod": "^3.23.8",
 		"zod-form-data": "^2.0.2"
 	},

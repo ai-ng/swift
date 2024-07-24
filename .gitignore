@@ -37,3 +37,4 @@ next-env.d.ts
 
 # files copied from npm modules
 public/
+old.js

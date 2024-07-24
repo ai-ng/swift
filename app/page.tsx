@@ -1,3 +1,7 @@
+// page.tsx
+
+// --- NEW VERSION USING THE WEBPLAYER --- 
+
 "use client";
 
 import clsx from "clsx";
@@ -7,6 +11,7 @@ import { EnterIcon, LoadingIcon } from "@/lib/icons";
 import { usePlayer } from "@/lib/usePlayer";
 import { track } from "@vercel/analytics";
 import { useMicVAD, utils } from "@ricky0123/vad-react";
+import Cartesia, { WebPlayer } from "@cartesia/cartesia-js";
 
 type Message = {
 	role: "user" | "assistant";
@@ -18,6 +23,7 @@ export default function Home() {
 	const [input, setInput] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
 	const player = usePlayer();
+	const audioContextRef = useRef<AudioContext | null>(null);
 
 	const vad = useMicVAD({
 		startOnLoad: true,
@@ -40,8 +46,7 @@ export default function Home() {
 
 			ort.env.wasm = {
 				wasmPaths: {
-					"ort-wasm-simd-threaded.wasm":
-						"/ort-wasm-simd-threaded.wasm",
+					"ort-wasm-simd-threaded.wasm": "/ort-wasm-simd-threaded.wasm",
 					"ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
 					"ort-wasm.wasm": "/ort-wasm.wasm",
 					"ort-wasm-threaded.wasm": "/ort-wasm-threaded.wasm",
@@ -61,68 +66,114 @@ export default function Home() {
 		return () => window.removeEventListener("keydown", keyDown);
 	});
 
-	const [messages, submit, isPending] = useActionState<
-		Array<Message>,
-		string | Blob
-	>(async (prevMessages, data) => {
-		const formData = new FormData();
+	const [messages, submit, isPending] = useActionState<Array<Message>, string | Blob>(
+		async (prevMessages, data) => {
+			const formData = new FormData();
 
-		if (typeof data === "string") {
-			formData.append("input", data);
-			track("Text input");
-		} else {
-			formData.append("input", data, "audio.wav");
-			track("Speech input");
-		}
-
-		for (const message of prevMessages) {
-			formData.append("message", JSON.stringify(message));
-		}
-
-		const submittedAt = Date.now();
-
-		const response = await fetch("/api", {
-			method: "POST",
-			body: formData,
-		});
-
-		const transcript = decodeURIComponent(
-			response.headers.get("X-Transcript") || ""
-		);
-		const text = decodeURIComponent(
-			response.headers.get("X-Response") || ""
-		);
-
-		if (!response.ok || !transcript || !text || !response.body) {
-			if (response.status === 429) {
-				toast.error("Too many requests. Please try again later.");
+			if (typeof data === "string") {
+				formData.append("input", data);
+				track("Text input");
 			} else {
-				toast.error((await response.text()) || "An error occurred.");
+				formData.append("input", data, "audio.wav");
+				track("Speech input");
 			}
 
-			return prevMessages;
-		}
+			for (const message of prevMessages) {
+				formData.append("message", JSON.stringify(message));
+			}
 
-		const latency = Date.now() - submittedAt;
-		player.play(response.body, () => {
-			const isFirefox = navigator.userAgent.includes("Firefox");
-			if (isFirefox) vad.start();
-		});
-		setInput(transcript);
+			const submittedAt = Date.now();
 
-		return [
-			...prevMessages,
-			{
-				role: "user",
-				content: transcript,
-			},
-			{
-				role: "assistant",
-				content: text,
-				latency,
-			},
-		];
-	}, []);
+			const response = await fetch("/api", {
+				method: "POST",
+				body: formData,
+			});
+
+			const transcript = decodeURIComponent(
+				response.headers.get("X-Transcript") || ""
+			);
+
+			if (!response.ok || !transcript || !response.body) {
+				if (response.status === 429) {
+					toast.error("Too many requests. Please try again later.");
+				} else {
+					toast.error((await response.text()) || "An error occurred.");
+				}
+
+				return prevMessages;
+			}
+
+			const cartesia = new Cartesia({
+				apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
+			});
+
+			const websocket = cartesia.tts.websocket({
+				container: "raw",
+				encoding: "pcm_f32le",
+				sampleRate: 44100,
+			});
+
+			await websocket.connect();
+
+			if (!audioContextRef.current) {
+				audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+				await audioContextRef.current.resume();
+			}
+
+			const player = new WebPlayer({bufferDuration: 0.1});
+
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+			let fullResponse = "";
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) {
+					break;
+				}
+				const chunk = decoder.decode(value);
+				fullResponse += chunk;
+				console.log("THIS IS A CHUNK?", chunk)
+				const cartesiaResponse = await websocket.send({
+					model_id: "sonic-english",
+					voice: {
+						mode: "id",
+						id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+					},
+					transcript: chunk,
+					continue: true,
+				});
+
+				await player.play(cartesiaResponse.source);
+			}
+
+			await websocket.send({
+				model_id: "sonic-english",
+				voice: {
+					mode: "id",
+					id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+				},
+				transcript: "",
+				continue: false,
+			});
+
+			websocket.disconnect();
+
+			return [
+				...prevMessages,
+				{
+					role: "user",
+					content: transcript,
+				},
+				{
+					role: "assistant",
+					content: fullResponse,
+					latency: Date.now() - submittedAt,
+				},
+			];
+		},
+		[]
+	);
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
@@ -171,7 +222,7 @@ export default function Home() {
 				{messages.length === 0 && (
 					<>
 						<p>
-							A fast, open-source voice assistant powered by{" "}
+							PhonePal, real-time translation of voice calls powered by{" "}
 							<A href="https://groq.com">Groq</A>,{" "}
 							<A href="https://cartesia.ai">Cartesia</A>,{" "}
 							<A href="https://www.vad.ricky0123.com/">VAD</A>,
