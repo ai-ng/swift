@@ -126,6 +126,7 @@ export default function Home() {
 			const decoder = new TextDecoder();
 			let fullResponse = "";
 
+			const cartesiaContextId = response.headers.get("X-Cartesia-Context-Id") || ""; // Retrieve context ID
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) {
@@ -141,6 +142,7 @@ export default function Home() {
 						id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
 					},
 					transcript: chunk,
+					context_id: cartesiaContextId, 
 					continue: true,
 				});
 
@@ -154,6 +156,7 @@ export default function Home() {
 					id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
 				},
 				transcript: "",
+				context_id: cartesiaContextId, 
 				continue: false,
 			});
 

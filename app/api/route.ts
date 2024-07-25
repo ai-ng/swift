@@ -6,6 +6,8 @@ Would be nice to do a before and after continuations
 Benchmark on A05 
 */
 
+// route.ts
+
 // ------ WITH STREAMING -------
 import Groq from "groq-sdk";
 import { headers } from "next/headers";
