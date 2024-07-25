@@ -2,6 +2,14 @@
 
 // --- NEW VERSION USING THE WEBPLAYER --- 
 
+/*
+Let's implement this in pieces:
+1) Implement a button where they can select from a dropdown the language that they want everything translated into, then it updates based on that 
+2) Upload a sample of there voice and does the instant voice clone 
+3) Then moves to the main screen, i don't think there should even be a search bar
+4) Have a two-way communication system, look into ways that this could be 
+*/
+
 "use client";
 
 import clsx from "clsx";
@@ -12,6 +20,16 @@ import { usePlayer } from "@/lib/usePlayer";
 import { track } from "@vercel/analytics";
 import { useMicVAD, utils } from "@ricky0123/vad-react";
 import Cartesia, { WebPlayer } from "@cartesia/cartesia-js";
+import { useMemo } from "react";
+
+const languages = [
+	{ code: "en", name: "English" },
+	{ code: "es", name: "Spanish" },
+	{ code: "fr", name: "French" },
+	{ code: "de", name: "German" },
+	{ code: "hi", name: "Hindi" },
+	// Add more languages as needed
+  ];
 
 type Message = {
 	role: "user" | "assistant";
@@ -20,15 +38,88 @@ type Message = {
 };
 
 export default function Home() {
+	const [selectedLanguage, setSelectedLanguage] = useState("en");
 	const [input, setInput] = useState("");
 	const inputRef = useRef<HTMLInputElement>(null);
-	const player = usePlayer();
+	const micPlayer = usePlayer();
 	const audioContextRef = useRef<AudioContext | null>(null);
+	const [voiceSample, setVoiceSample] = useState<File | null>(null);
+	const [clonedVoiceId, setClonedVoiceId] = useState<string | null>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// --- ADDING USE MEMO ---
+
+	// const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);  
+
+	// const [websocket, connectWebsocket] = useMemo(() => {
+	// 	const cartesia = new Cartesia({
+	// 	  apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
+	// 	});
+	  
+	// 	const ws = cartesia.tts.websocket({
+	// 	  container: "raw",
+	// 	  encoding: "pcm_f32le",
+	// 	  sampleRate: 44100,
+	// 	});
+	  
+	// 	const connect = () => ws.connect();
+	  
+	// 	return [ws, connect];
+	//   }, []);
+	  
+	//   const player = useMemo(() => new WebPlayer({ bufferDuration: 0.1 }), []);
+
+	//   useEffect(() => {
+	// 	connectWebsocket().then(() => {
+	// 	  setIsWebSocketConnected(true);
+	// 	}).catch((error) => {
+	// 	  console.error("WebSocket connection failed:", error);
+	// 	});
+	  
+	// 	return () => {
+	// 	  websocket.disconnect();
+	// 	};
+	//   }, [websocket, connectWebsocket]);
+
+	const handleVoiceSampleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		console.log("File input changed");
+		if (e.target.files && e.target.files[0]) {
+		  const file = e.target.files[0];
+		  console.log("File selected:", file.name);
+		  setVoiceSample(file);
+		  await handleVoiceClone(file);
+		}
+	  };
+	
+	  const handleVoiceClone = async (file: File) => {
+		if (!file) return;
+	  
+		const formData = new FormData();
+		formData.append('voiceSample', file);
+	  
+		try {
+		  const response = await fetch('/api/clone-voice', {
+			method: 'POST',
+			body: formData,
+		  });
+	  
+		  if (response.ok) {
+			const { voiceId } = await response.json();
+			setClonedVoiceId(voiceId);
+			toast.success("Voice cloned successfully!");
+		  } else {
+			toast.error("Failed to clone voice. Please try again.");
+		  }
+		} catch (error) {
+		  console.error("Error cloning voice:", error);
+		  toast.error("An error occurred while cloning the voice.");
+		}
+	  };
 
 	const vad = useMicVAD({
 		startOnLoad: true,
 		onSpeechEnd: (audio) => {
-			player.stop();
+			micPlayer.stop();
 			const wav = utils.encodeWAV(audio);
 			const blob = new Blob([wav], { type: "audio/wav" });
 			submit(blob);
@@ -66,9 +157,18 @@ export default function Home() {
 		return () => window.removeEventListener("keydown", keyDown);
 	});
 
+
 	const [messages, submit, isPending] = useActionState<Array<Message>, string | Blob>(
 		async (prevMessages, data) => {
+			// if (!isWebSocketConnected) {
+			// 	toast.error("WebSocket is not connected. Please try again.");
+			// 	return prevMessages;
+			//   }
 			const formData = new FormData();
+
+			if (clonedVoiceId) {
+				formData.append("clonedVoiceId", clonedVoiceId);
+			}
 
 			if (typeof data === "string") {
 				formData.append("input", data);
@@ -77,6 +177,8 @@ export default function Home() {
 				formData.append("input", data, "audio.wav");
 				track("Speech input");
 			}
+
+			formData.append("language", selectedLanguage);
 
 			for (const message of prevMessages) {
 				formData.append("message", JSON.stringify(message));
@@ -139,21 +241,23 @@ export default function Home() {
 					model_id: "sonic-english",
 					voice: {
 						mode: "id",
-						id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+						id: clonedVoiceId || "79a125e8-cd45-4c13-8a67-188112f4dd22",
 					},
 					transcript: chunk,
 					context_id: cartesiaContextId, 
 					continue: true,
 				});
 
+				// await player.play(cartesiaResponse.source);
 				await player.play(cartesiaResponse.source);
+
 			}
 
 			await websocket.send({
 				model_id: "sonic-english",
 				voice: {
 					mode: "id",
-					id: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+					id: clonedVoiceId || "79a125e8-cd45-4c13-8a67-188112f4dd22",
 				},
 				transcript: "",
 				context_id: cartesiaContextId, 
@@ -187,6 +291,60 @@ export default function Home() {
 		<>
 			<div className="pb-4 min-h-28" />
 
+			<div className="mb-4">
+				<select
+				value={selectedLanguage}
+				onChange={(e) => setSelectedLanguage(e.target.value)}
+				className="rounded-md bg-neutral-200 dark:bg-neutral-800 p-2"
+				>
+				{languages.map((lang) => (
+					<option key={lang.code} value={lang.code}>
+					{lang.name}
+					</option>
+				))}
+				</select>
+			</div>
+
+			{/* <div className="mb-4">
+				<input
+				type="file"
+				accept="audio/*"
+				onChange={handleVoiceSampleUpload}
+				className="hidden"
+				ref={fileInputRef}
+				/>
+				<button
+				onClick={() => fileInputRef.current?.click()}
+				className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+				>
+				Upload Voice Sample
+				</button>
+				<button
+				onClick={handleVoiceClone}
+				disabled={!voiceSample}
+				className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+				>
+				Clone Voice
+				</button>
+			</div> */}
+
+			<div className="mb-4">
+				<input
+					type="file"
+					accept="audio/*"
+					onChange={handleVoiceSampleUpload}
+					className="block w-full text-sm text-gray-500
+					file:mr-4 file:py-2 file:px-4
+					file:rounded-full file:border-0
+					file:text-sm file:font-semibold
+					file:bg-blue-50 file:text-blue-700
+					hover:file:bg-blue-100"
+				/>
+				{clonedVoiceId && (
+					<span className="mt-2 text-green-500 block">Voice cloned successfully!</span>
+				)}
+			</div>
+
 			<form
 				className="rounded-full bg-neutral-200/80 dark:bg-neutral-800/80 flex items-center w-full max-w-3xl border border-transparent hover:border-neutral-300 focus-within:border-neutral-400 hover:focus-within:border-neutral-400 dark:hover:border-neutral-700 dark:focus-within:border-neutral-600 dark:hover:focus-within:border-neutral-600"
 				onSubmit={handleFormSubmit}
@@ -209,6 +367,7 @@ export default function Home() {
 				>
 					{isPending ? <LoadingIcon /> : <EnterIcon />}
 				</button>
+
 			</form>
 
 			<div className="text-neutral-400 dark:text-neutral-600 pt-4 text-center max-w-xl text-balance min-h-28 space-y-4">

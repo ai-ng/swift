@@ -4,9 +4,9 @@ TODO:
 2) Get feedback on the particular method I am using to send buffer and see if this is good 
 Would be nice to do a before and after continuations
 Benchmark on A05 
-*/
 
-// route.ts
+The stream on the output should 
+*/
 
 // ------ WITH STREAMING -------
 import Groq from "groq-sdk";
@@ -26,11 +26,13 @@ const schema = zfd.formData({
       })
     )
   ),
+  language: z.string(),
+  clonedVoiceId: z.string().optional(),
 });
 
 let cartesiaContextId: string | null = null;
 
-async function* generateStream(transcript: string) {
+async function* generateStream(transcript: string, language: string) {
   const stream = await groq.chat.completions.create({
     model: "llama3-8b-8192",
     messages: [
@@ -40,7 +42,7 @@ async function* generateStream(transcript: string) {
       },
       {
         role: "user",
-        content: `Translate the following sentence into English; ONLY INCLUDE TRANSLATION, NOTHING ELSE: ${transcript}`,
+        content: `Translate the following sentence into ${language}; ONLY INCLUDE TRANSLATION, NOTHING ELSE: ${transcript}`,
       },
     ],
     temperature: 0.5,
@@ -70,12 +72,12 @@ export async function POST(request: Request) {
   const { data, success } = schema.safeParse(await request.formData());
   if (!success) return new Response("Invalid request", { status: 400 });
 
-  const transcript = await getTranscript(data.input);
+  const transcript = await getTranscript(data.input, data.language);
   if (!transcript) return new Response("Invalid audio", { status: 400 });
 
   cartesiaContextId = crypto.randomUUID();
 
-  const stream = generateStream(transcript);
+  const stream = generateStream(transcript, data.language);
 
   const encoder = new TextEncoder();
 
@@ -91,6 +93,7 @@ export async function POST(request: Request) {
       'Content-Type': 'text/plain; charset=utf-8',
       'X-Transcript': encodeURIComponent(transcript),
       'X-Cartesia-Context-Id': cartesiaContextId,
+	  'X-Cloned-Voice-Id': data.clonedVoiceId || '', 
     },
   });
 }
