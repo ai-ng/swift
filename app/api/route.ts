@@ -94,6 +94,7 @@ export async function POST(request: Request) {
       'X-Transcript': encodeURIComponent(transcript),
       'X-Cartesia-Context-Id': cartesiaContextId,
 	  'X-Cloned-Voice-Id': data.clonedVoiceId || '', 
+	  'X-Language': data.language,
     },
   });
 }

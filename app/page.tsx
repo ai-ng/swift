@@ -50,7 +50,12 @@ export default function Home() {
 	// --- ADDING USE MEMO ---
 
 	// const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);  
+	// const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);  
 
+	// const [websocket, connectWebsocket] = useMemo(() => {
+	// 	const cartesia = new Cartesia({
+	// 	  apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
+	// 	});
 	// const [websocket, connectWebsocket] = useMemo(() => {
 	// 	const cartesia = new Cartesia({
 	// 	  apiKey: process.env.NEXT_PUBLIC_CARTESIA_API_KEY!,
@@ -61,14 +66,29 @@ export default function Home() {
 	// 	  encoding: "pcm_f32le",
 	// 	  sampleRate: 44100,
 	// 	});
+	// 	const ws = cartesia.tts.websocket({
+	// 	  container: "raw",
+	// 	  encoding: "pcm_f32le",
+	// 	  sampleRate: 44100,
+	// 	});
 	  
+	// 	const connect = () => ws.connect();
 	// 	const connect = () => ws.connect();
 	  
 	// 	return [ws, connect];
 	//   }, []);
+	// 	return [ws, connect];
+	//   }, []);
 	  
 	//   const player = useMemo(() => new WebPlayer({ bufferDuration: 0.1 }), []);
+	//   const player = useMemo(() => new WebPlayer({ bufferDuration: 0.1 }), []);
 
+	//   useEffect(() => {
+	// 	connectWebsocket().then(() => {
+	// 	  setIsWebSocketConnected(true);
+	// 	}).catch((error) => {
+	// 	  console.error("WebSocket connection failed:", error);
+	// 	});
 	//   useEffect(() => {
 	// 	connectWebsocket().then(() => {
 	// 	  setIsWebSocketConnected(true);
@@ -98,23 +118,30 @@ export default function Home() {
 		formData.append('voiceSample', file);
 	  
 		try {
-		  const response = await fetch('/api/clone-voice', {
-			method: 'POST',
-			body: formData,
-		  });
-	  
-		  if (response.ok) {
-			const { voiceId } = await response.json();
-			setClonedVoiceId(voiceId);
-			toast.success("Voice cloned successfully!");
-		  } else {
-			toast.error("Failed to clone voice. Please try again.");
+			const response = await fetch('/api/clone-voice', {
+			  method: 'POST',
+			  body: formData,
+			});
+		
+			const data = await response.json();
+		
+			if (response.ok) {
+			  if (data.voiceId) {
+				setClonedVoiceId(data.voiceId);
+				toast.success("Voice cloned and created successfully!");
+			  } else {
+				console.error("Unexpected response:", data);
+				toast.error("Unexpected response from server.");
+			  }
+			} else {
+			  console.error("Error response:", data);
+			  toast.error(data.error || "Failed to clone voice. Please try again.");
+			}
+		  } catch (error) {
+			console.error("Error cloning voice:", error);
+			toast.error("An error occurred while cloning the voice.");
 		  }
-		} catch (error) {
-		  console.error("Error cloning voice:", error);
-		  toast.error("An error occurred while cloning the voice.");
-		}
-	  };
+		};		
 
 	const vad = useMicVAD({
 		startOnLoad: true,
@@ -238,7 +265,7 @@ export default function Home() {
 				fullResponse += chunk;
 				console.log("THIS IS A CHUNK?", chunk)
 				const cartesiaResponse = await websocket.send({
-					model_id: "sonic-english",
+					model_id: selectedLanguage === "en" ? "sonic-english" : "sonic-multilingual",
 					voice: {
 						mode: "id",
 						id: clonedVoiceId || "79a125e8-cd45-4c13-8a67-188112f4dd22",
@@ -246,6 +273,7 @@ export default function Home() {
 					transcript: chunk,
 					context_id: cartesiaContextId, 
 					continue: true,
+					language: selectedLanguage,
 				});
 
 				// await player.play(cartesiaResponse.source);
@@ -264,6 +292,7 @@ export default function Home() {
 				continue: false,
 			});
 
+			websocket.disconnect();
 			websocket.disconnect();
 
 			return [
@@ -327,11 +356,12 @@ export default function Home() {
 				Clone Voice
 				</button>
 			</div> */}
-
+			
 			<div className="mb-4">
 				<input
 					type="file"
 					accept="audio/*"
+					ref={fileInputRef}
 					onChange={handleVoiceSampleUpload}
 					className="block w-full text-sm text-gray-500
 					file:mr-4 file:py-2 file:px-4
