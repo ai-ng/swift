@@ -14,8 +14,6 @@ Thank you to the teams at Groq and Cartesia for providing access to their APIs f
 ## Developing
 
 -   Clone the repository
--   Create a `.env.local` file with:
-    -   `GROQ_API_KEY` from [console.groq.com](https://console.groq.com).
-    -   `CARTESIA_API_KEY` from [play.cartesia.ai](https://play.cartesia.ai/console).
+-   Copy `.env.example` to `.env.local` and fill in the environment variables.
 -   Run `pnpm install` to install dependencies.
 -   Run `pnpm dev` to start the development server.
