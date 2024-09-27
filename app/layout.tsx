@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 	title: "Swift",
 	description:
 		"A fast, open-source voice assistant powered by Groq, Cartesia, and Vercel.",
+	metadataBase: new URL('https://your-domain.com'),
 };
 
 export default function RootLayout({
