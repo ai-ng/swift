@@ -9,29 +9,28 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
-		"@ricky0123/vad-react": "^0.0.24",
-		"@ricky0123/vad-web": "^0.0.18",
-		"@vercel/analytics": "^1.2.2",
+		"@ricky0123/vad-react": "^0.0.28",
+		"@ricky0123/vad-web": "^0.0.22",
+		"@vercel/analytics": "^1.5.0",
 		"clsx": "^2.1.1",
-		"geist": "^1.3.0",
-		"groq-sdk": "^0.3.3",
-		"next": "15.0.0-rc.0",
-		"onnxruntime-web": "^1.18.0",
-		"react": "19.0.0-rc-100dfd7dab-20240701",
-		"react-dom": "19.0.0-rc-100dfd7dab-20240701",
-		"sonner": "^1.4.41",
-		"zod": "^3.23.8",
-		"zod-form-data": "^2.0.2"
+		"groq-sdk": "^0.19.0",
+		"next": "15.3.0",
+		"onnxruntime-web": "^1.21.0",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"sonner": "^2.0.3",
+		"zod": "^3.24.2",
+		"zod-form-data": "^2.0.7"
 	},
 	"devDependencies": {
-		"@types/node": "^20",
-		"@types/react": "^18",
-		"@types/react-dom": "^18",
-		"autoprefixer": "^10.4.19",
-		"eslint": "^8",
-		"eslint-config-next": "14.2.3",
+		"@tailwindcss/postcss": "^4.1.3",
+		"@types/node": "^22",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"eslint": "^9",
+		"eslint-config-next": "15.3.0",
 		"postcss": "^8",
-		"tailwindcss": "^3.4.1",
+		"tailwindcss": "^4.1.3",
 		"typescript": "^5"
 	}
 }

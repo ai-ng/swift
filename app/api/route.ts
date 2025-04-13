@@ -2,7 +2,7 @@ import Groq from "groq-sdk";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
-import { unstable_after as after } from "next/server";
+import { after } from "next/server";
 
 const groq = new Groq();
 
@@ -45,8 +45,8 @@ export async function POST(request: Request) {
 			- You do not have access to up-to-date information, so you should not provide real-time data.
 			- You are not capable of performing actions other than responding to the user.
 			- Do not use markdown, emojis, or other formatting in your responses. Respond in a way easily spoken by text-to-speech software.
-			- User location is ${location()}.
-			- The current time is ${time()}.
+			- User location is ${await location()}.
+			- The current time is ${await time()}.
 			- Your large language model is Llama 3, created by Meta, the 8 billion parameter version. It is hosted on Groq, an AI infrastructure company that builds fast inference technology.
 			- Your text-to-speech model is Sonic, created and hosted by Cartesia, a company that builds fast and realistic speech synthesis technology.
 			- You are built with Next.js and hosted on Vercel.`,
@@ -63,6 +63,8 @@ export async function POST(request: Request) {
 	console.timeEnd(
 		"text completion " + request.headers.get("x-vercel-id") || "local"
 	);
+
+	if (!response) return new Response("Invalid response", { status: 500 });
 
 	console.time(
 		"cartesia request " + request.headers.get("x-vercel-id") || "local"
@@ -101,9 +103,7 @@ export async function POST(request: Request) {
 
 	console.time("stream " + request.headers.get("x-vercel-id") || "local");
 	after(() => {
-		console.timeEnd(
-			"stream " + request.headers.get("x-vercel-id") || "local"
-		);
+		console.timeEnd("stream " + request.headers.get("x-vercel-id") || "local");
 	});
 
 	return new Response(voice.body, {
@@ -114,8 +114,8 @@ export async function POST(request: Request) {
 	});
 }
 
-function location() {
-	const headersList = headers();
+async function location() {
+	const headersList = await headers();
 
 	const country = headersList.get("x-vercel-ip-country");
 	const region = headersList.get("x-vercel-ip-country-region");
@@ -126,10 +126,10 @@ function location() {
 	return `${city}, ${region}, ${country}`;
 }
 
-function time() {
-	return new Date().toLocaleString("en-US", {
-		timeZone: headers().get("x-vercel-ip-timezone") || undefined,
-	});
+async function time() {
+	const headersList = await headers();
+	const timeZone = headersList.get("x-vercel-ip-timezone") || undefined;
+	return new Date().toLocaleString("en-US", { timeZone });
 }
 
 async function getTranscript(input: string | File) {

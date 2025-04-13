@@ -1,7 +1,13 @@
 "use client";
 
 import clsx from "clsx";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+	useActionState,
+	useEffect,
+	useRef,
+	useState,
+	startTransition,
+} from "react";
 import { toast } from "sonner";
 import { EnterIcon, LoadingIcon } from "@/lib/icons";
 import { usePlayer } from "@/lib/usePlayer";
@@ -25,30 +31,12 @@ export default function Home() {
 			player.stop();
 			const wav = utils.encodeWAV(audio);
 			const blob = new Blob([wav], { type: "audio/wav" });
-			submit(blob);
+			startTransition(() => submit(blob));
 			const isFirefox = navigator.userAgent.includes("Firefox");
 			if (isFirefox) vad.pause();
 		},
-		workletURL: "/vad.worklet.bundle.min.js",
-		modelURL: "/silero_vad.onnx",
 		positiveSpeechThreshold: 0.6,
 		minSpeechFrames: 4,
-		ortConfig(ort) {
-			const isSafari = /^((?!chrome|android).)*safari/i.test(
-				navigator.userAgent
-			);
-
-			ort.env.wasm = {
-				wasmPaths: {
-					"ort-wasm-simd-threaded.wasm":
-						"/ort-wasm-simd-threaded.wasm",
-					"ort-wasm-simd.wasm": "/ort-wasm-simd.wasm",
-					"ort-wasm.wasm": "/ort-wasm.wasm",
-					"ort-wasm-threaded.wasm": "/ort-wasm-threaded.wasm",
-				},
-				numThreads: isSafari ? 1 : 4,
-			};
-		},
 	});
 
 	useEffect(() => {
@@ -89,9 +77,7 @@ export default function Home() {
 		const transcript = decodeURIComponent(
 			response.headers.get("X-Transcript") || ""
 		);
-		const text = decodeURIComponent(
-			response.headers.get("X-Response") || ""
-		);
+		const text = decodeURIComponent(response.headers.get("X-Response") || "");
 
 		if (!response.ok || !transcript || !text || !response.body) {
 			if (response.status === 429) {
@@ -126,7 +112,7 @@ export default function Home() {
 
 	function handleFormSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		submit(input);
+		startTransition(() => submit(input));
 	}
 
 	return (
@@ -139,7 +125,7 @@ export default function Home() {
 			>
 				<input
 					type="text"
-					className="bg-transparent focus:outline-none p-4 w-full placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
+					className="bg-transparent focus:outline-hidden p-4 w-full placeholder:text-neutral-600 dark:placeholder:text-neutral-400"
 					required
 					placeholder="Ask me anything"
 					value={input}
@@ -174,12 +160,9 @@ export default function Home() {
 							A fast, open-source voice assistant powered by{" "}
 							<A href="https://groq.com">Groq</A>,{" "}
 							<A href="https://cartesia.ai">Cartesia</A>,{" "}
-							<A href="https://www.vad.ricky0123.com/">VAD</A>,
-							and <A href="https://vercel.com">Vercel</A>.{" "}
-							<A
-								href="https://github.com/ai-ng/swift"
-								target="_blank"
-							>
+							<A href="https://www.vad.ricky0123.com/">VAD</A>, and{" "}
+							<A href="https://vercel.com">Vercel</A>.{" "}
+							<A href="https://github.com/ai-ng/swift" target="_blank">
 								Learn more
 							</A>
 							.
@@ -198,11 +181,10 @@ export default function Home() {
 
 			<div
 				className={clsx(
-					"absolute size-36 blur-3xl rounded-full bg-gradient-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition ease-in-out",
+					"absolute size-36 blur-3xl rounded-full bg-linear-to-b from-red-200 to-red-400 dark:from-red-600 dark:to-red-800 -z-50 transition ease-in-out",
 					{
 						"opacity-0": vad.loading || vad.errored,
-						"opacity-30":
-							!vad.loading && !vad.errored && !vad.userSpeaking,
+						"opacity-30": !vad.loading && !vad.errored && !vad.userSpeaking,
 						"opacity-100 scale-110": vad.userSpeaking,
 					}
 				)}
