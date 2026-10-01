@@ -17,3 +17,18 @@ Thank you to the teams at Groq and Cartesia for providing access to their APIs f
 -   Copy `.env.example` to `.env.local` and fill in the environment variables.
 -   Run `pnpm install` to install dependencies.
 -   Run `pnpm dev` to start the development server.
+
+## 60db transcription
+
+Set `STT_PROVIDER=60db` and `SIXTYDB_API_KEY` in `.env.local` to transcribe
+microphone recordings with [60db speech-to-text](https://docs.60db.ai/api-reference/stt/speech-to-text).
+`SIXTYDB_STT_LANGUAGE` defaults to `auto`; set an ISO 639-1 code to select a language.
+Groq remains the default transcription provider. Text input continues to bypass
+transcription. Groq text generation and Cartesia speech output keep their existing
+keys and behavior.
+
+Recorded audio is uploaded to 60db. Empty files and uploads over 10 MB are rejected;
+requests have a 60-second timeout and are cancelled when the incoming request is
+aborted. Provider failures return the existing invalid-audio response.
+
+Run the focused adapter checks with `node --experimental-vm-modules --test tests/*.mjs` (Node 22.18+).
