@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { transcribeSixtyDB } from "../lib/sixtydb-stt";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
 	const { data, success } = schema.safeParse(await request.formData());
 	if (!success) return new Response("Invalid request", { status: 400 });
 
-	const transcript = await getTranscript(data.input);
+	const transcript = await getTranscript(data.input, request.signal);
 	if (!transcript) return new Response("Invalid audio", { status: 400 });
 
 	console.timeEnd(
@@ -132,10 +133,13 @@ async function time() {
 	return new Date().toLocaleString("en-US", { timeZone });
 }
 
-async function getTranscript(input: string | File) {
+async function getTranscript(input: string | File, signal?: AbortSignal) {
 	if (typeof input === "string") return input;
 
 	try {
+		const provider = process.env.STT_PROVIDER || "groq";
+		if (provider === "60db") return await transcribeSixtyDB(input, signal);
+		if (provider !== "groq") throw new Error("Unknown STT_PROVIDER");
 		const { text } = await groq.audio.transcriptions.create({
 			file: input,
 			model: "whisper-large-v3",
